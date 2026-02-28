@@ -1,0 +1,3727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Fitness Tracker">
+    <meta name="theme-color" content="#1a0a0a">
+    <title>Fitness Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+            background: radial-gradient(ellipse at center, #0a0a0a 0%, #1a0a0a 40%, #2d0a0a 70%, #3d1111 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        #root {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Modals & Overlays */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 100;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1e0e14;
+            border-top: 1px solid #333;
+            max-height: 100%;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease-out;
+            z-index: 101;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-header {
+            padding: 16px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #241218;
+        }
+
+        .modal-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #e0e0e0;
+            font-size: 24px;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .close-btn:active {
+            opacity: 0.7;
+        }
+
+        /* Main Container */
+        .app-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            background: #241218;
+            border-bottom: 1px solid #333;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            color: #8b3a62;
+            font-size: 20px;
+            padding: 8px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
+            border-radius: 8px;
+        }
+
+        .settings-btn:active {
+            background: rgba(139, 58, 98, 0.1);
+        }
+
+        /* Day Navigation */
+        .day-nav {
+            background: #241218;
+            border-bottom: 1px solid #333;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .nav-arrow {
+            background: none;
+            border: none;
+            color: #8b3a62;
+            font-size: 20px;
+            padding: 8px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .nav-arrow:active {
+            background: rgba(139, 58, 98, 0.1);
+        }
+
+        .day-display {
+            text-align: center;
+            flex: 1;
+        }
+
+        .day-date {
+            font-size: 16px;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+
+        .day-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #8b3a62;
+            margin-top: 6px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Content Area */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 0;
+            -webkit-overflow-scrolling: touch;
+            transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+        }
+
+        .content-padding {
+            padding: 16px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            color: #666;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        /* Exercise List */
+        .exercise-group {
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .exercise-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 0 4px;
+        }
+
+        .exercise-name {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #e0e0e0;
+        }
+
+        .exercise-menu-btn {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 16px;
+            padding: 4px 8px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .exercise-menu-btn:active {
+            color: #e0e0e0;
+        }
+
+        /* Collapsible Exercise */
+        .exercise-collapsible {
+            cursor: pointer;
+            user-select: none;
+            margin-bottom: 8px;
+        }
+
+        .exercise-toggle-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 4px;
+        }
+
+        .exercise-chevron {
+            font-size: 12px;
+            color: #999;
+            width: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Compact Set Display */
+        .set-boxes-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            padding: 4px 0;
+        }
+
+        .set-box {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin: 2px;
+            font-size: 13px;
+            font-weight: 600;
+            position: relative;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .set-box-content {
+            padding-right: 0;
+        }
+
+        .set-box-delete-inline {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: rgba(255, 50, 50, 0.35);
+            border: none;
+            color: white;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .set-box-delete {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            padding: 2px 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .set-box-delete:active {
+            color: white;
+        }
+
+        /* Set list for expanded view */
+        .set-list {
+            margin-top: 8px;
+            margin-bottom: 12px;
+        }
+
+        .set-item-expanded {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .set-item-expanded:active {
+            background: rgba(139, 58, 98, 0.1);
+            border-color: #8b3a62;
+        }
+
+        /* Buttons */
+        .btn {
+            background: #8b3a62;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .btn:active {
+            background: #6e2d4e;
+        }
+
+        .btn-secondary {
+            background: rgba(139, 58, 98, 0.2);
+            color: #8b3a62;
+            border: 1px solid rgba(139, 58, 98, 0.3);
+        }
+
+        .btn-secondary:active {
+            background: rgba(139, 58, 98, 0.3);
+        }
+
+        .btn-danger {
+            background: #ff6b6b;
+        }
+
+        .btn-danger:active {
+            background: #ff5252;
+        }
+
+        .btn-add-set {
+            background: rgba(139, 58, 98, 0.1);
+            color: #8b3a62;
+            border: 1px solid rgba(139, 58, 98, 0.3);
+            margin-bottom: 16px;
+        }
+
+        .btn-add-set:active {
+            background: rgba(139, 58, 98, 0.2);
+        }
+
+        /* Side-by-side buttons */
+        .button-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .button-row .btn {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .button-grid .btn {
+            padding: 10px 8px;
+            font-size: 13px;
+            margin-bottom: 0;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            color: #999;
+        }
+
+        .button-grid .btn.active {
+            background: #8b3a62;
+            border-color: #8b3a62;
+            color: white;
+        }
+
+        .button-grid .btn:active {
+            opacity: 0.8;
+        }
+
+        /* Search Input */
+        .search-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 16px;
+            margin-bottom: 16px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .search-input::placeholder {
+            color: #666;
+        }
+
+        /* Category Tabs */
+        .category-tabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .category-tab {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            color: #999;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .category-tab.active {
+            background: #8b3a62;
+            border-color: #8b3a62;
+            color: white;
+        }
+
+        .category-tab:active {
+            opacity: 0.8;
+        }
+
+        /* Exercise Picker List */
+        .exercise-picker-section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .exercise-picker-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .exercise-picker-item:active {
+            background: rgba(139, 58, 98, 0.1);
+            border-color: #8b3a62;
+        }
+
+        .exercise-picker-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #e0e0e0;
+        }
+
+        .exercise-picker-meta {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        /* Weight Picker Grid */
+        .weight-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .weight-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .weight-btn:active {
+            background: #8b3a62;
+            border-color: #8b3a62;
+            color: white;
+        }
+
+        .weight-btn.special {
+            grid-column: span 2.5;
+        }
+
+        /* Stepper */
+        .stepper-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            align-items: center;
+        }
+
+        .stepper-btn {
+            background: rgba(139, 58, 98, 0.2);
+            border: 1px solid rgba(139, 58, 98, 0.3);
+            color: #8b3a62;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .stepper-btn:active {
+            background: rgba(139, 58, 98, 0.3);
+        }
+
+        .stepper-input {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #e0e0e0;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 500;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        /* Rep Picker Grid */
+        .rep-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .rep-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rep-btn:active {
+            background: #8b3a62;
+            border-color: #8b3a62;
+            color: white;
+        }
+
+        /* Timer */
+        .timer-display {
+            text-align: center;
+            margin: 24px 0;
+        }
+
+        .timer-value {
+            font-size: 48px;
+            font-weight: 300;
+            color: #8b3a62;
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum" 1;
+        }
+
+        /* Duration Grid */
+        .duration-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .duration-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .duration-btn:active {
+            background: #8b3a62;
+            border-color: #8b3a62;
+            color: white;
+        }
+
+        /* Form Inputs */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #999;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 16px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #8b3a62;
+            background: rgba(139, 58, 98, 0.05);
+        }
+
+        .form-input::placeholder {
+            color: #666;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 14px;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23e0e0e0' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #8b3a62;
+            background: rgba(139, 58, 98, 0.05);
+        }
+
+        /* Modal Content */
+        .modal-content {
+            padding: 16px;
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-footer {
+            padding: 16px;
+            border-top: 1px solid #333;
+            display: flex;
+            gap: 8px;
+            background: #241218;
+        }
+
+        .modal-footer .btn {
+            margin-bottom: 0;
+        }
+
+        .modal-footer .btn:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Last Time Reference */
+        .last-time-section {
+            background: rgba(139, 58, 98, 0.05);
+            border: 1px solid rgba(139, 58, 98, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .last-time-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .last-time-set {
+            font-size: 14px;
+            color: #e0e0e0;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .last-time-set:last-child {
+            border-bottom: none;
+        }
+
+        /* Exercise History */
+        .history-date {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e0e0e0;
+            margin-top: 12px;
+            margin-bottom: 6px;
+        }
+
+        .history-sets {
+            font-size: 13px;
+            color: #999;
+            padding: 4px 0;
+        }
+
+        /* Menu Context */
+        .context-menu {
+            position: absolute;
+            background: #241218;
+            border: 1px solid #333;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            z-index: 200;
+            min-width: 160px;
+        }
+
+        .context-menu-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+            font-size: 14px;
+            color: #e0e0e0;
+            transition: all 0.2s ease;
+        }
+
+        .context-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .context-menu-item:active {
+            background: rgba(139, 58, 98, 0.1);
+        }
+
+        .context-menu-item.danger {
+            color: #ff6b6b;
+        }
+
+        /* Confirmation Dialog */
+        .confirmation-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #241218;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 24px;
+            z-index: 300;
+            max-width: 90%;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+        }
+
+        .confirmation-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #e0e0e0;
+        }
+
+        .confirmation-message {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .confirmation-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .confirmation-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .confirmation-buttons .btn-cancel {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            color: #e0e0e0;
+        }
+
+        .confirmation-buttons .btn-confirm {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        /* Your Weights Section */
+        .your-weights-container {
+            margin-bottom: 16px;
+            padding: 12px;
+            background: rgba(139, 58, 98, 0.05);
+            border: 1px solid rgba(139, 58, 98, 0.2);
+            border-radius: 8px;
+        }
+
+        .your-weights-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .your-weights-btn {
+            background: rgba(139, 58, 98, 0.3);
+            border: 1px solid rgba(139, 58, 98, 0.5);
+            color: #8b3a62;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .your-weights-btn:active {
+            background: rgba(139, 58, 98, 0.5);
+        }
+
+        /* Banded Colors Grid */
+        .banded-colors-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .banded-color-btn {
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .banded-red { background: #e74c3c; }
+        .banded-black { background: #2c3e50; }
+        .banded-purple { background: #9b59b6; }
+        .banded-green { background: #27ae60; }
+        .banded-blue { background: #3498db; }
+        .banded-orange { background: #e67e22; }
+        .banded-yellow { background: #f39c12; }
+        .banded-gray { background: #7f8c8d; }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .weight-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+
+            .rep-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .duration-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* Scrollbar Styling */
+        .content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .content::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 2px;
+        }
+
+        /* Safe Areas for notch */
+        @supports (padding: max(0px)) {
+            .top-nav {
+                padding-top: max(12px, env(safe-area-inset-top));
+                padding-bottom: 12px;
+                padding-left: max(16px, env(safe-area-inset-left));
+                padding-right: max(16px, env(safe-area-inset-right));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script>
+        window.onerror = function(msg, url, line, col, error) {
+            document.getElementById('root').innerHTML = '<div style="color:red;padding:20px;font-size:13px"><h2>JS Error</h2><pre>' + msg + '\nLine: ' + line + '\nCol: ' + col + '</pre><pre style="font-size:11px;margin-top:10px">' + (error ? error.stack : '') + '</pre></div>';
+        };
+    </script>
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback } = React;
+
+        // ============ DATABASE ============
+
+        let db = null;
+
+        const initDB = () => {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('FitnessTracker', 2);
+
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+
+                request.onupgradeneeded = (e) => {
+                    const database = e.target.result;
+
+                    if (!database.objectStoreNames.contains('exercises')) {
+                        const exercisesStore = database.createObjectStore('exercises', { keyPath: 'id' });
+                        exercisesStore.createIndex('by-lastUsed', 'lastUsed', { unique: false });
+                        exercisesStore.createIndex('by-category', 'category', { unique: false });
+                        exercisesStore.createIndex('by-name', 'name', { unique: false });
+                    }
+
+                    if (!database.objectStoreNames.contains('sets')) {
+                        const setsStore = database.createObjectStore('sets', { keyPath: 'id' });
+                        setsStore.createIndex('by-date', 'date', { unique: false });
+                        setsStore.createIndex('by-exerciseId', 'exerciseId', { unique: false });
+                        setsStore.createIndex('by-exerciseId-date', ['exerciseId', 'date'], { unique: false });
+                        setsStore.createIndex('by-date-exerciseOrder-setOrder', ['date', 'exerciseOrder', 'setOrder'], { unique: false });
+                    }
+
+                    if (!database.objectStoreNames.contains('dayNotes')) {
+                        database.createObjectStore('dayNotes', { keyPath: 'date' });
+                    }
+
+                    if (!database.objectStoreNames.contains('templates')) {
+                        database.createObjectStore('templates', { keyPath: 'dayOfWeek' });
+                    }
+
+                    if (!database.objectStoreNames.contains('sessionNotes')) {
+                        const sessionNotesStore = database.createObjectStore('sessionNotes', { keyPath: 'id' });
+                        sessionNotesStore.createIndex('by-exerciseId', 'exerciseId', { unique: false });
+                        sessionNotesStore.createIndex('by-date', 'date', { unique: false });
+                        sessionNotesStore.createIndex('by-exerciseId-date', ['exerciseId', 'date'], { unique: false });
+                    }
+                };
+            });
+        };
+
+        const generateId = (prefix) => {
+            return prefix + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        };
+
+        const dbOps = {
+            exercises: {
+                add: (exercise) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('exercises', 'readwrite');
+                        const store = tx.objectStore('exercises');
+                        const req = store.add(exercise);
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve(req.result);
+                    });
+                },
+                update: (exercise) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('exercises', 'readwrite');
+                        const store = tx.objectStore('exercises');
+                        const req = store.put(exercise);
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve(req.result);
+                    });
+                },
+                get: (id) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('exercises', 'readonly');
+                        const store = tx.objectStore('exercises');
+                        const req = store.get(id);
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve(req.result);
+                    });
+                },
+                getAll: () => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('exercises', 'readonly');
+                        const store = tx.objectStore('exercises');
+                        const req = store.getAll();
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve(req.result);
+                    });
+                },
+                getByLastUsed: () => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('exercises', 'readonly');
+                        const index = tx.objectStore('exercises').index('by-lastUsed');
+                        const req = index.getAll();
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve(req.result.sort((a, b) => (b.lastUsed || '').localeCompare(a.lastUsed || '')));
+                    });
+                },
+                getByCategory: (category) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('exercises', 'readonly');
+                        const index = tx.objectStore('exercises').index('by-category');
+                        const req = index.getAll(category);
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve(req.result);
+                    });
+                },
+                delete: (id) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('exercises', 'readwrite');
+                        const store = tx.objectStore('exercises');
+                        const req = store.delete(id);
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve();
+                    });
+                },
+            },
+            sets: {
+                add: (set) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('sets', 'readwrite');
+                        const store = tx.objectStore('sets');
+                        const req = store.add(set);
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve(req.result);
+                    });
+                },
+                update: (set) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('sets', 'readwrite');
+                        const store = tx.objectStore('sets');
+                        const req = store.put(set);
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve(req.result);
+                    });
+                },
+                delete: (id) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('sets', 'readwrite');
+                        const store = tx.objectStore('sets');
+                        const req = store.delete(id);
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve();
+                    });
+                },
+                getByDate: (date) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('sets', 'readonly');
+                        const index = tx.objectStore('sets').index('by-date');
+                        const req = index.getAll(date);
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve(req.result.sort((a, b) => (a.exerciseOrder - b.exerciseOrder) || (a.setOrder - b.setOrder)));
+                    });
+                },
+                getByExerciseId: (exerciseId) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('sets', 'readonly');
+                        const index = tx.objectStore('sets').index('by-exerciseId');
+                        const req = index.getAll(exerciseId);
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve(req.result.sort((a, b) => b.date.localeCompare(a.date)));
+                    });
+                },
+                getLastSession: (exerciseId) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('sets', 'readonly');
+                        const index = tx.objectStore('sets').index('by-exerciseId');
+                        const req = index.getAll(exerciseId);
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => {
+                            const sets = req.result.sort((a, b) => b.date.localeCompare(a.date));
+                            if (sets.length === 0) {
+                                resolve(null);
+                            } else {
+                                const lastDate = sets[0].date;
+                                const lastSets = sets.filter(s => s.date === lastDate);
+                                resolve({ date: lastDate, sets: lastSets });
+                            }
+                        };
+                    });
+                },
+            },
+            dayNotes: {
+                get: (date) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('dayNotes', 'readonly');
+                        const store = tx.objectStore('dayNotes');
+                        const req = store.get(date);
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve(req.result);
+                    });
+                },
+                set: (date, note) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('dayNotes', 'readwrite');
+                        const store = tx.objectStore('dayNotes');
+                        const req = store.put({ date, note });
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve();
+                    });
+                },
+                delete: (date) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('dayNotes', 'readwrite');
+                        const store = tx.objectStore('dayNotes');
+                        const req = store.delete(date);
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve();
+                    });
+                },
+            },
+            templates: {
+                get: (dayOfWeek) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('templates', 'readonly');
+                        const store = tx.objectStore('templates');
+                        const req = store.get(dayOfWeek);
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve(req.result);
+                    });
+                },
+                set: (dayOfWeek, label) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('templates', 'readwrite');
+                        const store = tx.objectStore('templates');
+                        const req = store.put({ dayOfWeek, label });
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve();
+                    });
+                },
+                getAll: () => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('templates', 'readonly');
+                        const store = tx.objectStore('templates');
+                        const req = store.getAll();
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve(req.result);
+                    });
+                },
+            },
+            sessionNotes: {
+                add: (note) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('sessionNotes', 'readwrite');
+                        const req = tx.objectStore('sessionNotes').put(note);
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve(req.result);
+                    });
+                },
+                getByExerciseAndDate: (exerciseId, date) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('sessionNotes', 'readonly');
+                        const index = tx.objectStore('sessionNotes').index('by-exerciseId-date');
+                        const req = index.getAll([exerciseId, date]);
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve(req.result[0] || null);
+                    });
+                },
+                getByExerciseId: (exerciseId) => {
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction('sessionNotes', 'readonly');
+                        const index = tx.objectStore('sessionNotes').index('by-exerciseId');
+                        const req = index.getAll(exerciseId);
+                        req.onerror = () => reject(req.error);
+                        req.onsuccess = () => resolve(req.result.sort((a, b) => b.date.localeCompare(a.date)));
+                    });
+                },
+            },
+        };
+
+        // ============ UTILITY FUNCTIONS ============
+
+        const parseLocalDate = (dateStr) => {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            return new Date(y, m - 1, d);
+        };
+
+        const formatDate = (date) => {
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+            const d = typeof date === 'string' ? parseLocalDate(date) : date;
+            const dayName = days[d.getDay()];
+            const month = months[d.getMonth()];
+            const day = d.getDate();
+
+            return `${dayName}, ${month} ${day}`;
+        };
+
+        const formatDateShort = (date) => {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const d = typeof date === 'string' ? parseLocalDate(date) : date;
+            const month = months[d.getMonth()];
+            const day = d.getDate();
+            return `${month} ${day}`;
+        };
+
+        const getDateString = (date) => {
+            const d = typeof date === 'string' ? parseLocalDate(date) : date;
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        };
+
+        const getTodayString = () => {
+            return getDateString(new Date());
+        };
+
+        const addDays = (dateStr, days) => {
+            const d = typeof dateStr === 'string' ? parseLocalDate(dateStr) : new Date(dateStr);
+            d.setDate(d.getDate() + days);
+            return getDateString(d);
+        };
+
+        const formatSetDisplay = (set) => {
+            let display = `Set ${set.setOrder}: `;
+            if (set.weightType === 'bodyweight') {
+                display += 'BW';
+            } else if (set.weightType === 'banded') {
+                const bandLabel = (set.bandedColor && set.bandedColor !== 'undefined') ? set.bandedColor + ' Band' : 'Banded';
+                display += bandLabel;
+            } else if (set.weight !== null) {
+                display += `${set.weight} ${set.weightType || 'lbs'}`;
+            }
+
+            if (set.reps !== null) {
+                display += ` × ${set.reps}`;
+            } else if (set.duration !== null) {
+                const mins = Math.floor(set.duration / 60);
+                const secs = set.duration % 60;
+                display += ` · ${mins}:${String(secs).padStart(2, '0')}`;
+            }
+
+            return display;
+        };
+
+        const getSetBoxColor = (index) => {
+            const colors = [
+                'rgba(67, 97, 238, 0.3)',     // blue
+                'rgba(139, 58, 98, 0.35)',    // mauve
+                'rgba(76, 201, 240, 0.3)',    // teal
+                'rgba(255, 209, 102, 0.3)',   // yellow
+            ];
+            return colors[index % colors.length];
+        };
+
+        const formatSetBox = (set, previousSet) => {
+            let box = '';
+
+            if (!previousSet || set.weight !== previousSet.weight || set.weightType !== previousSet.weightType) {
+                if (set.weightType === 'bodyweight') {
+                    box += 'BW ';
+                } else if (set.weightType === 'banded') {
+                    const bandLabel = (set.bandedColor && set.bandedColor !== 'undefined') ? `${set.bandedColor} Band` : 'Band';
+                    box += bandLabel + ' ';
+                } else if (set.weight !== null && set.weight !== undefined && !isNaN(set.weight)) {
+                    box += `${set.weight}lbs `;
+                }
+            }
+
+            if (set.reps !== null) {
+                box += `${set.reps}r`;
+            } else if (set.duration !== null) {
+                const mins = Math.floor(set.duration / 60);
+                const secs = set.duration % 60;
+                box += `${mins}:${String(secs).padStart(2, '0')}`;
+            }
+
+            return box.trim();
+        };
+
+        // ============ MODALS ============
+
+        const EditCategoriesModal = ({ categories, onSave, onCancel }) => {
+            const [cats, setCats] = useState([...categories]);
+            const [newCat, setNewCat] = useState('');
+
+            const addCategory = () => {
+                const name = newCat.trim().toLowerCase();
+                if (name && !cats.includes(name)) {
+                    setCats([...cats, name]);
+                    setNewCat('');
+                }
+            };
+
+            const removeCategory = (cat) => {
+                setCats(cats.filter(c => c !== cat));
+            };
+
+            return (
+                <div className="modal-overlay" onClick={onCancel}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Edit Categories</h2>
+                            <button className="close-btn" onClick={onCancel}>✕</button>
+                        </div>
+                        <div className="modal-content">
+                            {cats.map(cat => (
+                                <div key={cat} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #3a2a30' }}>
+                                    <span style={{ textTransform: 'capitalize', color: '#e0e0e0' }}>{cat}</span>
+                                    <button
+                                        onClick={() => removeCategory(cat)}
+                                        style={{ background: 'none', border: 'none', color: 'rgba(255, 100, 100, 0.4)', fontSize: '18px', cursor: 'pointer', padding: '4px 8px' }}
+                                    >✕</button>
+                                </div>
+                            ))}
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="New category name"
+                                    value={newCat}
+                                    onChange={(e) => setNewCat(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && addCategory()}
+                                    style={{ flex: 1 }}
+                                />
+                                <button className="btn" onClick={addCategory} style={{ width: 'auto', padding: '12px 16px' }}>Add</button>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn btn-secondary" onClick={onCancel}>Cancel</button>
+                            <button className="btn" onClick={() => onSave(cats)}>Save</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ExercisePickerModal = ({ onSelect, onCreateNew, selectedDate, categories, onCategoriesChanged, defaultCategory }) => {
+            const [search, setSearch] = useState('');
+            const [category, setCategory] = useState(defaultCategory || 'all');
+            const [exercises, setExercises] = useState([]);
+            const [filtered, setFiltered] = useState([]);
+
+            useEffect(() => {
+                const loadExercises = async () => {
+                    const all = await dbOps.exercises.getByLastUsed();
+                    setExercises(all || []);
+                };
+                loadExercises();
+            }, []);
+
+            useEffect(() => {
+                let result = exercises;
+
+                if (category !== 'all') {
+                    result = result.filter(e => e.category === category);
+                }
+
+                if (search.trim()) {
+                    const q = search.toLowerCase();
+                    result = result.filter(e => e.name.toLowerCase().includes(q));
+                }
+
+                setFiltered(result);
+            }, [exercises, search, category]);
+
+            const allCategories = ['all', ...categories];
+            const [showEditCategories, setShowEditCategories] = useState(false);
+
+            if (showEditCategories) {
+                return (
+                    <EditCategoriesModal
+                        categories={categories}
+                        onSave={async (newCats) => {
+                            await saveCategories(newCats);
+                            if (onCategoriesChanged) onCategoriesChanged(newCats);
+                            setShowEditCategories(false);
+                        }}
+                        onCancel={() => setShowEditCategories(false)}
+                    />
+                );
+            }
+
+            return (
+                <div className="modal-overlay" onClick={() => onSelect(null)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Add Activity</h2>
+                            <button className="close-btn" onClick={() => onSelect(null)}>✕</button>
+                        </div>
+                        <div className="modal-content">
+                            <button className="btn btn-secondary" onClick={onCreateNew} style={{ marginBottom: 16 }}>
+                                + Create New Activity
+                            </button>
+
+                            <input
+                                type="text"
+                                className="search-input"
+                                placeholder="🔍 Search activities..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
+
+                            <div>
+                                <div className="category-tabs">
+                                    {allCategories.map(cat => (
+                                        <button
+                                            key={cat}
+                                            className={`category-tab ${category === cat ? 'active' : ''}`}
+                                            onClick={() => setCategory(cat)}
+                                        >
+                                            {cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                        </button>
+                                    ))}
+                                    <button
+                                        className="category-tab"
+                                        style={{ backgroundColor: 'rgba(180, 80, 50, 0.3)', borderColor: 'rgba(180, 80, 50, 0.5)', color: '#d4845a' }}
+                                        onClick={() => setShowEditCategories(true)}
+                                    >
+                                        Edit
+                                    </button>
+                                </div>
+                            </div>
+
+                            {filtered.length > 0 ? (
+                                <div className="exercise-picker-section">
+                                    <div className="section-title">{category === 'all' ? 'All Activities' : category.charAt(0).toUpperCase() + category.slice(1)}</div>
+                                    {filtered.map(ex => (
+                                        <div
+                                            key={ex.id}
+                                            className="exercise-picker-item"
+                                            onClick={() => onSelect(ex)}
+                                        >
+                                            <div className="exercise-picker-name">{ex.name}</div>
+                                            <div className="exercise-picker-meta">
+                                                {ex.category && <span style={{ textTransform: 'capitalize' }}>{ex.category}</span>}
+                                                {ex.lastUsed ? ` · Last: ${formatDateShort(ex.lastUsed)}` : ''}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div style={{ textAlign: 'center', color: '#666', marginTop: 20, marginBottom: 20 }}>
+                                    {search ? 'No activities found' : 'No activities yet. Create one above!'}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const CreateExerciseModal = ({ onSave, onCancel, categories }) => {
+            const [name, setName] = useState('');
+            const [category, setCategory] = useState(categories[0] || 'push');
+            const [type, setType] = useState('reps');
+
+            const handleSave = async () => {
+                if (!name.trim()) return;
+
+                const exercise = {
+                    id: generateId('ex'),
+                    name: name.trim(),
+                    category,
+                    type,
+                    note: '',
+                    lastUsed: getTodayString(),
+                    createdAt: Date.now(),
+                };
+
+                await dbOps.exercises.add(exercise);
+                onSave(exercise);
+            };
+
+            return (
+                <div className="modal-overlay" onClick={onCancel}>
+                    <div className="modal" style={{ height: '100vh', maxHeight: '100vh', top: 0, bottom: 0 }} onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>New Activity</h2>
+                            <button className="close-btn" onClick={onCancel}>✕</button>
+                        </div>
+                        <div className="modal-content" style={{ flex: 1, overflow: 'auto' }}>
+                            <div className="form-group">
+                                <label className="form-label">Activity Name</label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="E.g., Bench Press"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    autoFocus
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Category</label>
+                                <div className="button-grid">
+                                    {categories.map(cat => (
+                                        <button
+                                            key={cat}
+                                            className={`btn ${category === cat ? 'active' : ''}`}
+                                            onClick={() => setCategory(cat)}
+                                        >
+                                            {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Type</label>
+                                <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1px solid #3a2a30' }}>
+                                    <button
+                                        onClick={() => setType('reps')}
+                                        style={{
+                                            flex: 1,
+                                            padding: '10px',
+                                            border: 'none',
+                                            fontSize: '13px',
+                                            fontWeight: '600',
+                                            cursor: 'pointer',
+                                            WebkitAppearance: 'none',
+                                            background: type === 'reps' ? 'rgba(139, 58, 98, 0.25)' : 'rgba(255, 255, 255, 0.03)',
+                                            color: type === 'reps' ? '#c77da0' : '#666',
+                                            borderRight: '1px solid #3a2a30',
+                                        }}
+                                    >
+                                        Reps
+                                    </button>
+                                    <button
+                                        onClick={() => setType('timed')}
+                                        style={{
+                                            flex: 1,
+                                            padding: '10px',
+                                            border: 'none',
+                                            fontSize: '13px',
+                                            fontWeight: '600',
+                                            cursor: 'pointer',
+                                            WebkitAppearance: 'none',
+                                            background: type === 'timed' ? 'rgba(139, 58, 98, 0.25)' : 'rgba(255, 255, 255, 0.03)',
+                                            color: type === 'timed' ? '#c77da0' : '#666',
+                                        }}
+                                    >
+                                        Timed
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button
+                                className="btn"
+                                onClick={handleSave}
+                                style={{ opacity: name.trim() ? 1 : 0.4, marginBottom: '8px', marginTop: '8px' }}
+                            >
+                                Create Activity
+                            </button>
+                            <button
+                                className="btn btn-secondary"
+                                onClick={onCancel}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const WeightPickerModal = ({ exercise, onSelectWeight, selectedDate, previousWeight, setNumber }) => {
+            const [weight, setWeight] = useState(previousWeight || 45);
+            const [weightType, setWeightType] = useState('lbs');
+            const [showBandedColors, setShowBandedColors] = useState(false);
+            const [selectedBandColor, setSelectedBandColor] = useState(null);
+            const [bandedCustomName, setBandedCustomName] = useState('');
+            const [yourWeights, setYourWeights] = useState([]);
+
+            const commonWeights = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130, 135, 140, 145, 150, 155, 160, 165, 170, 175, 180, 185, 190, 195, 200, 205, 210, 215, 220, 225];
+
+            useEffect(() => {
+                const loadWeights = async () => {
+                    const lastSession = await dbOps.sets.getLastSession(exercise.id);
+                    if (lastSession) {
+                        const weights = new Map();
+                        lastSession.sets.forEach(s => {
+                            if (s.weight && s.weightType === 'lbs') {
+                                weights.set(s.weight, (weights.get(s.weight) || 0) + 1);
+                            }
+                        });
+                        setYourWeights(Array.from(weights.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5).map(w => w[0]));
+                    }
+                };
+                loadWeights();
+            }, [exercise]);
+
+            return (
+                <div className="modal-overlay" onClick={() => onSelectWeight(null)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>{exercise.name} — Set {setNumber || 1}</h2>
+                            <button className="close-btn" onClick={() => onSelectWeight(null)}>✕</button>
+                        </div>
+                        <div className="modal-content">
+                            {yourWeights.length > 0 && (
+                                <div className="your-weights-container">
+                                    <div className="section-title">Your Weights</div>
+                                    <div className="your-weights-row">
+                                        {yourWeights.map(w => (
+                                            <button
+                                                key={w}
+                                                className="your-weights-btn"
+                                                onClick={() => onSelectWeight({ weight: w, weightType: 'lbs' })}
+                                            >
+                                                {w}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="form-group">
+                                <label className="form-label">Manual Entry</label>
+                                <div className="stepper-container">
+                                    <button
+                                        className="stepper-btn"
+                                        onClick={() => setWeight(Math.max(0, weight - 5))}
+                                    >
+                                        −5
+                                    </button>
+                                    <input
+                                        type="number"
+                                        className="stepper-input"
+                                        value={weight}
+                                        onChange={(e) => setWeight(parseInt(e.target.value) || 0)}
+                                    />
+                                    <button
+                                        className="stepper-btn"
+                                        onClick={() => setWeight(weight + 5)}
+                                    >
+                                        +5
+                                    </button>
+                                </div>
+                                <button
+                                    className="btn"
+                                    onClick={() => onSelectWeight({ weight: weight, weightType: 'lbs' })}
+                                    style={{ marginTop: '4px' }}
+                                >
+                                    Use {weight} lbs →
+                                </button>
+                            </div>
+
+                            <div className="button-row">
+                                <button
+                                    className={`btn ${weightType === 'bodyweight' ? '' : 'btn-secondary'}`}
+                                    onClick={() => { onSelectWeight({ weight: null, weightType: 'bodyweight' }); }}
+                                >
+                                    BW
+                                </button>
+                                <button
+                                    className={`btn ${weightType === 'banded' ? '' : 'btn-secondary'}`}
+                                    onClick={() => { setWeightType('banded'); setShowBandedColors(!showBandedColors); }}
+                                >
+                                    Banded
+                                </button>
+                            </div>
+
+                            {showBandedColors && (
+                                <div className="exercise-picker-section">
+                                    <div className="banded-colors-grid">
+                                        <button className="banded-color-btn banded-red" onClick={() => { setSelectedBandColor('Red'); }}>Red</button>
+                                        <button className="banded-color-btn banded-black" onClick={() => { setSelectedBandColor('Black'); }}>Black</button>
+                                        <button className="banded-color-btn banded-purple" onClick={() => { setSelectedBandColor('Purple'); }}>Purple</button>
+                                        <button className="banded-color-btn banded-green" onClick={() => { setSelectedBandColor('Green'); }}>Green</button>
+                                        <button className="banded-color-btn banded-blue" onClick={() => { setSelectedBandColor('Blue'); }}>Blue</button>
+                                        <button className="banded-color-btn banded-orange" onClick={() => { setSelectedBandColor('Orange'); }}>Orange</button>
+                                        <button className="banded-color-btn banded-yellow" onClick={() => { setSelectedBandColor('Yellow'); }}>Yellow</button>
+                                        <button className="banded-color-btn banded-gray" onClick={() => { setSelectedBandColor('Gray'); }}>Gray</button>
+                                    </div>
+
+                                    {selectedBandColor && (
+                                        <div style={{ marginTop: '12px' }}>
+                                            <div className="section-title">Thickness</div>
+                                            <div className="button-row" style={{ flexWrap: 'wrap' }}>
+                                                <button className="btn btn-secondary" style={{ flex: '1' }} onClick={() => onSelectWeight({ weight: null, weightType: 'banded', bandedColor: selectedBandColor })}>
+                                                    Just {selectedBandColor}
+                                                </button>
+                                                <button className="btn btn-secondary" style={{ flex: '1' }} onClick={() => onSelectWeight({ weight: null, weightType: 'banded', bandedColor: `${selectedBandColor} Thin` })}>
+                                                    Thin
+                                                </button>
+                                                <button className="btn btn-secondary" style={{ flex: '1' }} onClick={() => onSelectWeight({ weight: null, weightType: 'banded', bandedColor: `${selectedBandColor} Medium` })}>
+                                                    Medium
+                                                </button>
+                                                <button className="btn btn-secondary" style={{ flex: '1' }} onClick={() => onSelectWeight({ weight: null, weightType: 'banded', bandedColor: `${selectedBandColor} Thick` })}>
+                                                    Thick
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="Custom band name"
+                                        value={bandedCustomName}
+                                        onChange={(e) => setBandedCustomName(e.target.value)}
+                                        style={{ marginBottom: '16px', marginTop: '12px' }}
+                                    />
+                                    {bandedCustomName && (
+                                        <button
+                                            className="btn btn-secondary"
+                                            onClick={() => { onSelectWeight({ weight: null, weightType: 'banded', bandedColor: bandedCustomName }); }}
+                                        >
+                                            Use {bandedCustomName}
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="exercise-picker-section">
+                                <div className="section-title">Common Weights</div>
+                                <div className="weight-grid">
+                                    {commonWeights.map(w => (
+                                        <button
+                                            key={w}
+                                            className="weight-btn"
+                                            onClick={() => onSelectWeight({ weight: w, weightType: 'lbs' })}
+                                        >
+                                            {w}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const RepPickerModal = ({ exercise, weight, weightType, onSelectReps, setNumber }) => {
+            const reps = Array.from({ length: 20 }, (_, i) => i + 1);
+
+            const displayWeight = weightType === 'bodyweight' ? 'BW' : weightType === 'banded' ? 'Banded' : `${weight} ${weightType}`;
+
+            return (
+                <div className="modal-overlay" onClick={() => onSelectReps(null)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <div>
+                                <h2>{exercise.name} — Set {setNumber || 1}</h2>
+                                <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
+                                    Weight: {displayWeight}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-content">
+                            <div className="rep-grid">
+                                {reps.map(r => (
+                                    <button
+                                        key={r}
+                                        className="rep-btn"
+                                        onClick={() => onSelectReps(r)}
+                                    >
+                                        {r}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const TimedDurationModal = ({ exercise, weight, weightType, onSelectDuration, setNumber }) => {
+            const [time, setTime] = useState(0);
+            const [isRunning, setIsRunning] = useState(false);
+            const intervalRef = useRef(null);
+
+            useEffect(() => {
+                if (isRunning) {
+                    intervalRef.current = setInterval(() => {
+                        setTime(t => t + 1);
+                    }, 1000);
+                } else {
+                    if (intervalRef.current) {
+                        clearInterval(intervalRef.current);
+                    }
+                }
+
+                return () => {
+                    if (intervalRef.current) {
+                        clearInterval(intervalRef.current);
+                    }
+                };
+            }, [isRunning]);
+
+            const formatTime = (seconds) => {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}:${String(secs).padStart(2, '0')}`;
+            };
+
+            const displayWeight = weightType === 'bodyweight' ? 'BW' : weightType === 'banded' ? 'Banded' : `${weight} ${weightType}`;
+
+            const quickDurations = [30, 60, 90, 120, 150, 180, 240, 300];
+
+            return (
+                <div className="modal-overlay" onClick={() => onSelectDuration(null)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <div>
+                                <h2>{exercise.name} — Set {setNumber || 1}</h2>
+                                <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
+                                    Weight: {displayWeight}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-content">
+                            <div className="timer-display">
+                                <div className="timer-value">{formatTime(time)}</div>
+                            </div>
+
+                            <button
+                                className={isRunning ? 'btn btn-danger' : 'btn'}
+                                onClick={() => {
+                                    if (isRunning) {
+                                        setIsRunning(false);
+                                    } else {
+                                        setIsRunning(true);
+                                    }
+                                }}
+                            >
+                                {isRunning ? 'STOP' : 'START'}
+                            </button>
+
+                            {time > 0 && (
+                                <button
+                                    className="btn"
+                                    onClick={() => onSelectDuration(time)}
+                                    style={{ marginTop: '8px' }}
+                                >
+                                    Save {formatTime(time)}
+                                </button>
+                            )}
+
+                            <div style={{ textAlign: 'center', margin: '20px 0', fontSize: '12px', color: '#666' }}>
+                                — OR SELECT —
+                            </div>
+
+                            <div className="duration-grid">
+                                {quickDurations.map(d => (
+                                    <button
+                                        key={d}
+                                        className="duration-btn"
+                                        onClick={() => onSelectDuration(d)}
+                                    >
+                                        {Math.floor(d / 60)}:{String(d % 60).padStart(2, '0')}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        
+
+        const SessionNoteModal = ({ exercise, date, onSave, onCancel }) => {
+            const [tags, setTags] = useState([]);
+            const [freeText, setFreeText] = useState('');
+            const [formCueText, setFormCueText] = useState('');
+            
+            const [loading, setLoading] = useState(true);
+
+            const presetTags = {
+                'Energy': ['Low Energy', 'Felt Strong', 'Fatigued', 'Feeling Sick', 'Sore Going In'],
+                'Performance': ['Went to Failure', 'Couldn\'t Hit Normal Weight', 'Couldn\'t Hit Normal Volume', 'New PR', 'Deload'],
+                'Form': ['Felt Off', 'Good Mind-Muscle'],
+            };
+
+            useEffect(() => {
+                const load = async () => {
+                    const existing = await dbOps.sessionNotes.getByExerciseAndDate(exercise.id, date);
+                    if (existing) {
+                        setTags(existing.tags || []);
+                        setFreeText(existing.freeText || '');
+                        setFormCueText(existing.formCueText || '');
+                    }
+                    setLoading(false);
+                };
+                load();
+            }, [exercise, date]);
+
+            const toggleTag = (tag) => {
+                setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+            };
+
+            const handleSave = async () => {
+                const note = {
+                    id: `sn_${exercise.id}_${date}`,
+                    exerciseId: exercise.id,
+                    date: date,
+                    tags,
+                    freeText,
+                    formCueText,
+                    updatedAt: new Date().toISOString(),
+                };
+                await dbOps.sessionNotes.add(note);
+                onSave();
+            };
+
+            if (loading) return null;
+
+            return (
+                <div className="modal-overlay" onClick={onCancel}>
+                    <div className="modal" style={{ maxHeight: '95vh' }} onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Session Note</h2>
+                            <button className="close-btn" onClick={onCancel}>✕</button>
+                        </div>
+                        <div className="modal-content">
+                            <div style={{ color: '#999', fontSize: '13px', marginBottom: '16px' }}>
+                                {exercise.name} — {formatDateShort(date)}
+                            </div>
+
+                            {Object.entries(presetTags).map(([category, categoryTags]) => (
+                                <div key={category} style={{ marginBottom: '16px' }}>
+                                    <div className="section-title">{category}</div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                        {categoryTags.map(tag => (
+                                            <button
+                                                key={tag}
+                                                onClick={() => toggleTag(tag)}
+                                                style={{
+                                                    padding: '6px 12px',
+                                                    borderRadius: '16px',
+                                                    border: tags.includes(tag) ? '1px solid rgba(139, 58, 98, 0.5)' : '1px solid #333',
+                                                    background: tags.includes(tag) ? 'rgba(139, 58, 98, 0.3)' : 'rgba(255, 255, 255, 0.05)',
+                                                    color: tags.includes(tag) ? '#7b93f5' : '#999',
+                                                    fontSize: '12px',
+                                                    fontWeight: '500',
+                                                    cursor: 'pointer',
+                                                    WebkitAppearance: 'none',
+                                                }}
+                                            >
+                                                {tag}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+
+                            <div style={{ marginBottom: '16px' }}>
+                                <div className="section-title">Form Cue</div>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="e.g., Keep elbows at 45°"
+                                    value={formCueText}
+                                    onChange={(e) => setFormCueText(e.target.value)}
+                                />
+                            </div>
+
+                            <div style={{ marginBottom: '16px' }}>
+                                <div className="section-title">General Notes</div>
+                                <textarea
+                                    className="form-input"
+                                    placeholder="Anything else..."
+                                    value={freeText}
+                                    onChange={(e) => setFreeText(e.target.value)}
+                                    style={{ minHeight: '80px', fontFamily: 'inherit' }}
+                                />
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn btn-secondary" onClick={onCancel}>Cancel</button>
+                            <button className="btn" onClick={handleSave}>Save</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const HistoryModal = ({ exercise, onClose, onLogSet }) => {
+            const [history, setHistory] = useState([]);
+            const [sessionNotes, setSessionNotes] = useState({});
+
+            useEffect(() => {
+                const loadHistory = async () => {
+                    const sets = await dbOps.sets.getByExerciseId(exercise.id);
+                    const grouped = {};
+                    sets.forEach(set => {
+                        if (!grouped[set.date]) {
+                            grouped[set.date] = [];
+                        }
+                        grouped[set.date].push(set);
+                    });
+
+                    const dates = Object.keys(grouped).sort().reverse();
+                    setHistory(dates.map(date => ({ date, sets: grouped[date].sort((a, b) => a.setOrder - b.setOrder) })));
+
+                    const notes = await dbOps.sessionNotes.getByExerciseId(exercise.id);
+                    const notesByDate = {};
+                    notes.forEach(n => { notesByDate[n.date] = n; });
+                    setSessionNotes(notesByDate);
+                };
+                loadHistory();
+            }, [exercise]);
+
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>{exercise.name}{onLogSet ? '' : ' History'}</h2>
+                            <button className="close-btn" onClick={onClose}>✕</button>
+                        </div>
+                        <div className="modal-content">
+                            {onLogSet && (
+                                <button className="btn" onClick={onLogSet} style={{ marginBottom: '16px' }}>
+                                    Log a Set →
+                                </button>
+                            )}
+                            {exercise.note && (
+                                <div style={{ marginBottom: '12px', padding: '8px 12px', background: 'rgba(139, 58, 98, 0.08)', borderRadius: '8px', fontSize: '13px', color: '#c77da0' }}>
+                                    <strong>Form Cue:</strong> {exercise.note}
+                                </div>
+                            )}
+                            {history.length === 0 ? (
+                                <div style={{ textAlign: 'center', color: '#666', marginTop: 20 }}>
+                                    {onLogSet ? 'First time — no history yet' : 'No history yet'}
+                                </div>
+                            ) : (
+                                history.map((session, idx) => {
+                                    const note = sessionNotes[session.date];
+                                    return (
+                                        <div key={idx} style={{ paddingBottom: '12px', marginBottom: '12px', borderBottom: idx < history.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                                            <div className="history-date">{formatDateShort(session.date)}</div>
+                                            <div className="set-boxes-container">
+                                                {session.sets.map((s, sidx) => (
+                                                    <div
+                                                        key={sidx}
+                                                        className="set-box"
+                                                        style={{ backgroundColor: getSetBoxColor(sidx) }}
+                                                    >
+                                                        {formatSetBox(s, session.sets[sidx - 1])}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {note && (
+                                                <div style={{ marginTop: '8px' }}>
+                                                    {note.tags && note.tags.length > 0 && (
+                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '6px' }}>
+                                                            {note.tags.map(tag => (
+                                                                <span key={tag} style={{ padding: '2px 8px', borderRadius: '12px', background: 'rgba(139, 58, 98, 0.2)', color: '#7b93f5', fontSize: '11px' }}>
+                                                                    {tag}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    {note.formCueText && <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}><strong>Form:</strong> {note.formCueText}</div>}
+                                                    {note.freeText && <div style={{ fontSize: '12px', color: '#999' }}>{note.freeText}</div>}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const SettingsModal = ({ onClose, onCategoriesChanged, categories: settingsCategories }) => {
+            const [activeTab, setActiveTab] = useState('weekly');
+            const [weeklyLabels, setWeeklyLabels] = useState({
+                0: '', 1: '', 2: '', 3: '', 4: '', 5: '', 6: ''
+            });
+            const [resetConfirmStep, setResetConfirmStep] = useState(null);
+            const [resetConfirmText, setResetConfirmText] = useState('');
+            const [showCatEditor, setShowCatEditor] = useState(false);
+
+            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const templateOptions = ['', ...(settingsCategories || ['push', 'pull', 'legs', 'core', 'cardio']).map(c => c.charAt(0).toUpperCase() + c.slice(1)), 'Rest'];
+
+            const handleSelectChange = (idx, value) => {
+                if (value === '__add_new__') {
+                    setShowCatEditor(true);
+                } else {
+                    setWeeklyLabels({ ...weeklyLabels, [idx]: value });
+                }
+            };
+
+            useEffect(() => {
+                if (activeTab === 'weekly') {
+                    const loadTemplates = async () => {
+                        const temps = await dbOps.templates.getAll();
+                        const labels = { 0: '', 1: '', 2: '', 3: '', 4: '', 5: '', 6: '' };
+                        temps.forEach(t => {
+                            labels[t.dayOfWeek] = t.label || '';
+                        });
+                        setWeeklyLabels(labels);
+                    };
+                    loadTemplates();
+                }
+            }, [activeTab]);
+
+            const handleSaveTemplate = async () => {
+                // Load current templates to check what changed
+                const oldTemps = await dbOps.templates.getAll();
+                const oldLabels = {};
+                oldTemps.forEach(t => { oldLabels[t.dayOfWeek] = t.label || ''; });
+
+                for (let i = 0; i < 7; i++) {
+                    await dbOps.templates.set(i, weeklyLabels[i]);
+                }
+
+                // Check if today's day-of-week was changed
+                const todayDow = parseLocalDate(getTodayString()).getDay();
+                const todayStr = getTodayString();
+                if (oldLabels[todayDow] !== weeklyLabels[todayDow]) {
+                    if (window.confirm(`Apply "${weeklyLabels[todayDow] || 'None'}" to today as well?`)) {
+                        await dbOps.dayNotes.set(`__split_${todayStr}`, weeklyLabels[todayDow]);
+                    }
+                }
+
+                onClose();
+            };
+
+            const handleExport = async () => {
+                const allExercises = await dbOps.exercises.getAll();
+                const allSets = [];
+                const tx = db.transaction('sets', 'readonly');
+                await new Promise((resolve) => {
+                    const req = tx.objectStore('sets').getAll();
+                    req.onsuccess = () => {
+                        allSets.push(...req.result);
+                        resolve();
+                    };
+                });
+
+                // Load all session notes for export
+                const allSessionNotes = [];
+                const snTx = db.transaction('sessionNotes', 'readonly');
+                await new Promise((resolve) => {
+                    const req = snTx.objectStore('sessionNotes').getAll();
+                    req.onsuccess = () => {
+                        allSessionNotes.push(...req.result);
+                        resolve();
+                    };
+                });
+                const noteMap = {};
+                allSessionNotes.forEach(sn => {
+                    noteMap[`${sn.exerciseId}_${sn.date}`] = sn;
+                });
+
+                // Include weekly splits as a metadata row
+                const allTemplates = await dbOps.templates.getAll();
+                const splitMap = {};
+                allTemplates.forEach(t => { splitMap[t.dayOfWeek] = t.label || ''; });
+                const splitLine = ['__SPLITS__', splitMap[0]||'', splitMap[1]||'', splitMap[2]||'', splitMap[3]||'', splitMap[4]||'', splitMap[5]||'', splitMap[6]||'', '', ''].join(',');
+
+                // Also export per-day split overrides
+                const allDayNotes = [];
+                const dnTx = db.transaction('dayNotes', 'readonly');
+                await new Promise((resolve) => {
+                    const req = dnTx.objectStore('dayNotes').getAll();
+                    req.onsuccess = () => { allDayNotes.push(...req.result); resolve(); };
+                });
+                let daySplitLines = '';
+                allDayNotes.filter(dn => dn.date.startsWith('__split_')).forEach(dn => {
+                    const splitDate = dn.date.replace('__split_', '');
+                    daySplitLines += `__DAYSPLIT__,${splitDate},${dn.note},,,,,,, \n`;
+                });
+
+                let csv = 'Date,Exercise,Category,Type,Set,Weight,WeightType,Reps,Duration,Note\n' + splitLine + '\n' + daySplitLines;
+                allSets.sort((a, b) => a.date.localeCompare(b.date) || a.exerciseOrder - b.exerciseOrder || a.setOrder - b.setOrder)
+                    .forEach(set => {
+                        const ex = allExercises.find(e => e.id === set.exerciseId) || {};
+                        const weightStr = set.weight !== null ? set.weight : '';
+                        const repsStr = set.reps !== null ? set.reps : '';
+                        const durationStr = set.duration !== null ? set.duration : '';
+                        let noteStr = '';
+                        if (set.weightType === 'banded' && set.bandedColor) {
+                            noteStr = set.bandedColor;
+                            // For banded set 1, also include session notes after band color
+                            if (set.setOrder === 1) {
+                                const sn = noteMap[`${set.exerciseId}_${set.date}`];
+                                if (sn) {
+                                    const parts = [];
+                                    if (sn.tags) sn.tags.forEach(t => parts.push(t));
+                                    if (sn.formCueText) parts.push(`Form:${sn.formCueText}`);
+                                    if (sn.freeText) parts.push(`General:${sn.freeText}`);
+                                    if (parts.length > 0) noteStr += '|' + parts.join('|');
+                                }
+                            }
+                        } else if (set.setOrder === 1) {
+                            // Include session notes on set 1 for round-trip fidelity
+                            const sn = noteMap[`${set.exerciseId}_${set.date}`];
+                            if (sn) {
+                                const parts = [];
+                                if (sn.tags) sn.tags.forEach(t => parts.push(t));
+                                if (sn.formCueText) parts.push(`Form:${sn.formCueText}`);
+                                if (sn.freeText) parts.push(`General:${sn.freeText}`);
+                                noteStr = parts.join('|');
+                            }
+                        }
+                        // Quote note field if it contains commas
+                        const noteField = noteStr.includes(',') ? `"${noteStr.replace(/"/g, '""')}"` : noteStr;
+                        csv += `${set.date},${set.exerciseName},${ex.category || ''},${ex.type || ''},${set.setOrder},${weightStr},${set.weightType},${repsStr},${durationStr},${noteField}\n`;
+                    });
+
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `fitness-export-${getTodayString()}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+
+            // Proper CSV line parser that handles quoted fields
+            const parseCSVLine = (line) => {
+                const fields = [];
+                let current = '';
+                let inQuotes = false;
+                for (let i = 0; i < line.length; i++) {
+                    const ch = line[i];
+                    if (inQuotes) {
+                        if (ch === '"' && line[i + 1] === '"') {
+                            current += '"';
+                            i++; // skip escaped quote
+                        } else if (ch === '"') {
+                            inQuotes = false;
+                        } else {
+                            current += ch;
+                        }
+                    } else {
+                        if (ch === '"') {
+                            inQuotes = true;
+                        } else if (ch === ',') {
+                            fields.push(current.trim());
+                            current = '';
+                        } else {
+                            current += ch;
+                        }
+                    }
+                }
+                fields.push(current.trim());
+                return fields;
+            };
+
+            const [importStatus, setImportStatus] = useState(null);
+
+            const handleImport = async () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.csv';
+                input.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    setImportStatus('Reading file...');
+
+                    const text = await file.text();
+                    const allLines = text.split('\n').slice(1).filter(l => l.trim());
+
+                    // Check for __SPLITS__ metadata row and extract weekly splits
+                    let importedSplits = null;
+                    const importedDaySplits = [];
+                    const lines = allLines.filter(l => {
+                        const parts = parseCSVLine(l);
+                        if (parts[0] === '__SPLITS__') {
+                            importedSplits = { 0: parts[1]||'', 1: parts[2]||'', 2: parts[3]||'', 3: parts[4]||'', 4: parts[5]||'', 5: parts[6]||'', 6: parts[7]||'' };
+                            return false;
+                        }
+                        if (parts[0] === '__DAYSPLIT__') {
+                            importedDaySplits.push({ date: parts[1], split: parts[2] || '' });
+                            return false;
+                        }
+                        return true;
+                    });
+                    const totalLines = lines.length;
+
+                    setImportStatus(`Parsing ${totalLines} rows...`);
+
+                    // PHASE 1: Parse all lines into structured data (no DB operations)
+                    const exerciseMap = new Map(); // name -> exercise object
+                    const existingExercises = await dbOps.exercises.getAll();
+                    existingExercises.forEach(ex => exerciseMap.set(ex.name, ex));
+
+                    const parsedRows = [];
+                    for (const line of lines) {
+                        try {
+                            const parts = parseCSVLine(line);
+                            const date = parts[0];
+                            const exerciseName = parts[1];
+                            if (!date || !exerciseName) continue;
+
+                            const category = (parts[2] || 'push').toLowerCase();
+                            const rawType = (parts[3] || 'reps').toLowerCase();
+                            const type = (rawType === 'reps' || rawType === 'timed') ? rawType : 'reps';
+                            const weightType = parts[6] || 'lbs';
+                            const note = (parts[9] || '');
+
+                            // Create exercise record if needed
+                            if (!exerciseMap.has(exerciseName)) {
+                                const newEx = {
+                                    id: generateId('ex'),
+                                    name: exerciseName,
+                                    category,
+                                    type,
+                                    note: '',
+                                    lastUsed: date,
+                                    createdAt: Date.now(),
+                                };
+                                exerciseMap.set(exerciseName, newEx);
+                            } else {
+                                const ex = exerciseMap.get(exerciseName);
+                                if (date > (ex.lastUsed || '')) {
+                                    ex.lastUsed = date;
+                                }
+                            }
+
+                            parsedRows.push({
+                                date,
+                                exerciseName,
+                                setOrder: parseInt(parts[4]) || 1,
+                                weight: (parts[5] && parts[5] !== '') ? parseFloat(parts[5]) : null,
+                                weightType,
+                                reps: (parts[7] && parts[7] !== '') ? parseInt(parts[7]) : null,
+                                duration: (parts[8] && parts[8] !== '') ? parseInt(parts[8]) : null,
+                                bandedColor: (weightType === 'banded' && note) ? note.split('|')[0].trim() : undefined,
+                                note: (weightType === 'banded' && note && note.includes('|')) ? note.split('|').slice(1).join('|').trim() : (weightType !== 'banded' ? note : ''),
+                            });
+                        } catch (err) {
+                            console.error('Parse error:', line, err);
+                        }
+                    }
+
+                    // PHASE 2: Compute exerciseOrder for each exercise on each date
+                    // Group rows by date to assign exerciseOrder
+                    const byDate = new Map();
+                    for (const row of parsedRows) {
+                        if (!byDate.has(row.date)) byDate.set(row.date, []);
+                        byDate.get(row.date).push(row);
+                    }
+
+                    // For each date, assign exerciseOrder based on first appearance
+                    const setsToWrite = [];
+                    for (const [date, rows] of byDate) {
+                        const exerciseOrderMap = new Map();
+                        let nextOrder = 1;
+                        for (const row of rows) {
+                            if (!exerciseOrderMap.has(row.exerciseName)) {
+                                exerciseOrderMap.set(row.exerciseName, nextOrder++);
+                            }
+                        }
+
+                        for (const row of rows) {
+                            const exercise = exerciseMap.get(row.exerciseName);
+                            setsToWrite.push({
+                                id: generateId('set'),
+                                date,
+                                exerciseId: exercise.id,
+                                exerciseName: exercise.name,
+                                exerciseOrder: exerciseOrderMap.get(row.exerciseName),
+                                setOrder: row.setOrder,
+                                weight: row.weight,
+                                weightType: row.weightType,
+                                bandedColor: row.bandedColor,
+                                reps: row.reps,
+                                duration: row.duration,
+                                createdAt: Date.now(),
+                            });
+                        }
+                    }
+
+                    // PHASE 3: Write exercises to DB (batch transaction)
+                    setImportStatus('Writing activities...');
+                    const exercisesToWrite = Array.from(exerciseMap.values());
+                    await new Promise((resolve, reject) => {
+                        const tx = db.transaction('exercises', 'readwrite');
+                        const store = tx.objectStore('exercises');
+                        for (const ex of exercisesToWrite) {
+                            store.put(ex); // put = upsert
+                        }
+                        tx.oncomplete = () => resolve();
+                        tx.onerror = () => reject(tx.error);
+                    });
+
+                    // PHASE 4: Write sets to DB in batches (batch transaction)
+                    setImportStatus(`Writing ${setsToWrite.length} sets...`);
+                    const BATCH_SIZE = 200;
+                    for (let i = 0; i < setsToWrite.length; i += BATCH_SIZE) {
+                        const batch = setsToWrite.slice(i, i + BATCH_SIZE);
+                        await new Promise((resolve, reject) => {
+                            const tx = db.transaction('sets', 'readwrite');
+                            const store = tx.objectStore('sets');
+                            for (const set of batch) {
+                                store.add(set);
+                            }
+                            tx.oncomplete = () => resolve();
+                            tx.onerror = () => reject(tx.error);
+                        });
+                        setImportStatus(`Writing sets... ${Math.min(i + BATCH_SIZE, setsToWrite.length)}/${setsToWrite.length}`);
+                    }
+
+                    // PHASE 5: Write session notes
+                    setImportStatus('Writing session notes...');
+                    const sessionNotesToWrite = [];
+                    for (const row of parsedRows) {
+                        if (row.note && row.setOrder === 1) {
+                            const exercise = exerciseMap.get(row.exerciseName);
+                            const noteParts = row.note.split('|').map(p => p.trim());
+                            const tags = [];
+                            let formCueText = '';
+                            let freeText = '';
+                            noteParts.forEach(p => {
+                                if (p.startsWith('Form:')) {
+                                    formCueText = p.substring(5).trim();
+                                } else if (p.startsWith('General:')) {
+                                    freeText = p.substring(8).trim();
+                                } else if (p) {
+                                    tags.push(p);
+                                }
+                            });
+                            if (tags.length > 0 || formCueText || freeText) {
+                                sessionNotesToWrite.push({
+                                    id: `sn_${exercise.id}_${row.date}`,
+                                    exerciseId: exercise.id,
+                                    date: row.date,
+                                    tags,
+                                    freeText,
+                                    formCueText,
+                                    updatedAt: new Date().toISOString(),
+                                });
+                            }
+                        }
+                    }
+
+                    if (sessionNotesToWrite.length > 0) {
+                        await new Promise((resolve, reject) => {
+                            const tx = db.transaction('sessionNotes', 'readwrite');
+                            const store = tx.objectStore('sessionNotes');
+                            for (const sn of sessionNotesToWrite) {
+                                store.put(sn);
+                            }
+                            tx.oncomplete = () => resolve();
+                            tx.onerror = () => reject(tx.error);
+                        });
+                    }
+
+                    // PHASE 6: Write weekly splits if present
+                    if (importedSplits) {
+                        for (let i = 0; i < 7; i++) {
+                            await dbOps.templates.set(i, importedSplits[i] || '');
+                        }
+                    }
+
+                    // Write per-day splits
+                    for (const ds of importedDaySplits) {
+                        await dbOps.dayNotes.set(`__split_${ds.date}`, ds.split);
+                    }
+
+                    setImportStatus(`Done! Imported ${setsToWrite.length} sets for ${exercisesToWrite.length} activities.`);
+
+                    // Wait briefly for UI to show success, then reload
+                    await new Promise(r => setTimeout(r, 1000));
+                    window.location.reload();
+                };
+                input.click();
+            };
+
+            const handleNuclearReset = async () => {
+                const storeNames = ['exercises', 'sets', 'dayNotes', 'templates', 'sessionNotes'];
+                for (const storeName of storeNames) {
+                    if (db.objectStoreNames.contains(storeName)) {
+                        const tx = db.transaction(storeName, 'readwrite');
+                        tx.objectStore(storeName).clear();
+                        await new Promise(r => { tx.oncomplete = r; });
+                    }
+                }
+                window.location.reload();
+            };
+
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal" style={{ height: '100vh', maxHeight: '100vh', top: 0, bottom: 0 }} onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Settings</h2>
+                            <button className="close-btn" onClick={onClose}>✕</button>
+                        </div>
+                        <div className="modal-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                            <div style={{ display: 'flex', gap: '0', marginBottom: '12px' }}>
+                                <button
+                                    onClick={() => setActiveTab('weekly')}
+                                    style={{
+                                        flex: 1, padding: '12px 0', border: 'none', fontSize: '14px', fontWeight: '600',
+                                        cursor: 'pointer', WebkitAppearance: 'none',
+                                        background: activeTab === 'weekly' ? '#8b3a62' : 'rgba(255,255,255,0.05)',
+                                        color: activeTab === 'weekly' ? '#fff' : '#999',
+                                        borderRadius: '8px 0 0 8px',
+                                    }}
+                                >
+                                    Weekly Splits
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('data')}
+                                    style={{
+                                        flex: 1, padding: '12px 0', border: 'none', fontSize: '14px', fontWeight: '600',
+                                        cursor: 'pointer', WebkitAppearance: 'none',
+                                        background: activeTab === 'data' ? '#8b3a62' : 'rgba(255,255,255,0.05)',
+                                        color: activeTab === 'data' ? '#fff' : '#999',
+                                        borderRadius: '0 8px 8px 0',
+                                    }}
+                                >
+                                    Data
+                                </button>
+                            </div>
+
+                            {activeTab === 'weekly' && (
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                                    <div style={{ flex: 1 }}>
+                                        {dayNames.map((day, idx) => (
+                                            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                                <label style={{ fontSize: '13px', fontWeight: '600', color: '#c77da0', textTransform: 'uppercase', letterSpacing: '0.5px', width: '36px', flexShrink: 0 }}>
+                                                    {day.substring(0, 3)}
+                                                </label>
+                                                <select
+                                                    className="form-select"
+                                                    value={weeklyLabels[idx]}
+                                                    onChange={(e) => handleSelectChange(idx, e.target.value)}
+                                                    style={{ flex: 1, margin: 0, padding: '10px 12px' }}
+                                                >
+                                                    {templateOptions.map(opt => (
+                                                        <option key={opt} value={opt}>{opt || 'None'}</option>
+                                                    ))}
+                                                    <option value="__add_new__">+ Add New Split...</option>
+                                                </select>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <button className="btn" onClick={handleSaveTemplate} style={{ marginTop: '8px' }}>Save Weekly Splits</button>
+                                    {showCatEditor && (
+                                        <EditCategoriesModal
+                                            categories={settingsCategories || ['push', 'pull', 'legs', 'core', 'cardio']}
+                                            onSave={async (cats) => {
+                                                await saveCategories(cats);
+                                                if (onCategoriesChanged) onCategoriesChanged(cats);
+                                                setShowCatEditor(false);
+                                            }}
+                                            onCancel={() => setShowCatEditor(false)}
+                                        />
+                                    )}
+                                </div>
+                            )}
+
+                            {activeTab === 'data' && (
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                    <div>
+                                        <button className="btn" onClick={handleExport}>Export Data to CSV</button>
+                                        <button className="btn btn-secondary" onClick={handleImport} style={{ marginTop: '8px' }} disabled={!!importStatus}>
+                                            {importStatus ? 'Importing...' : 'Import Data from CSV'}
+                                        </button>
+                                        {importStatus && (
+                                            <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(139, 58, 98, 0.1)', borderRadius: '8px', textAlign: 'center' }}>
+                                                <div style={{ fontSize: '13px', color: '#c77da0', fontWeight: '500' }}>{importStatus}</div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div style={{ flex: 1 }}></div>
+                                    <div style={{ borderTop: '1px solid #333', paddingTop: '16px', textAlign: 'center' }}>
+                                        <h3 style={{ color: '#ff6b6b', marginBottom: '8px', fontSize: '14px' }}>Reset All Data</h3>
+                                        <p style={{ color: '#666', marginBottom: '12px', lineHeight: '1.5', fontSize: '12px' }}>
+                                            Permanently delete all activities, sets, notes, templates, and session notes. This cannot be undone.
+                                        </p>
+                                        {!resetConfirmStep ? (
+                                            <button className="btn btn-danger" onClick={() => setResetConfirmStep(1)} style={{ fontSize: '13px', padding: '10px 16px' }}>
+                                                Reset Everything
+                                            </button>
+                                        ) : resetConfirmStep === 1 ? (
+                                            <div>
+                                                <p style={{ color: '#ff6b6b', marginBottom: '12px', fontWeight: '600', fontSize: '13px' }}>
+                                                    Are you sure? Type DELETE to confirm.
+                                                </p>
+                                                <input
+                                                    type="text"
+                                                    className="form-input"
+                                                    placeholder="Type DELETE"
+                                                    value={resetConfirmText}
+                                                    onChange={(e) => setResetConfirmText(e.target.value)}
+                                                    style={{ marginBottom: '12px', textAlign: 'center' }}
+                                                />
+                                                <div className="button-row">
+                                                    <button className="btn btn-secondary" onClick={() => { setResetConfirmStep(null); setResetConfirmText(''); }}>Cancel</button>
+                                                    <button
+                                                        className="btn btn-danger"
+                                                        disabled={resetConfirmText !== 'DELETE'}
+                                                        style={{ opacity: resetConfirmText === 'DELETE' ? 1 : 0.3 }}
+                                                        onClick={handleNuclearReset}
+                                                    >
+                                                        Confirm Reset
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ChangeCategoryModal = ({ exercise, onSave, onCancel, categories, dayLabel }) => {
+
+            const handleSelect = async (cat) => {
+                exercise.category = cat;
+                await dbOps.exercises.update(exercise);
+                onSave();
+            };
+
+            return (
+                <div className="modal-overlay" onClick={onCancel}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Add to Split</h2>
+                            <button className="close-btn" onClick={onCancel}>✕</button>
+                        </div>
+                        <div className="modal-content">
+                            {dayLabel && <div style={{ fontSize: '12px', color: '#8b3a62', marginBottom: '8px', textAlign: 'center' }}>Today's split: {dayLabel}</div>}
+                            <p style={{ color: '#999', marginBottom: '16px' }}>Current: {exercise.category}</p>
+                            <div className="button-grid">
+                                {categories.map(cat => (
+                                    <button key={cat} className={`btn ${exercise.category === cat ? 'active' : ''}`} onClick={() => handleSelect(cat)}>
+                                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ConfirmationDialog = ({ title, message, onConfirm, onCancel }) => {
+            return (
+                <div className="modal-overlay" onClick={onCancel}>
+                    <div className="confirmation-dialog" onClick={(e) => e.stopPropagation()}>
+                        <div className="confirmation-title">{title}</div>
+                        <div className="confirmation-message">{message}</div>
+                        <div className="confirmation-buttons">
+                            <button className="btn-cancel" onClick={onCancel}>Cancel</button>
+                            <button className="btn-confirm" onClick={onConfirm}>Delete</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ============ MAIN APP ============
+
+        
+        const getCategories = async () => {
+            const record = await dbOps.dayNotes.get('__categories__');
+            if (record && record.note) {
+                try { return JSON.parse(record.note); } catch(e) {}
+            }
+            return ['push', 'pull', 'legs', 'core', 'cardio', 'mobility', 'stretch', 'other'];
+        };
+
+        const saveCategories = async (cats) => {
+            await dbOps.dayNotes.set('__categories__', JSON.stringify(cats));
+        };
+
+        const DayDetailModal = ({ date, onClose, dayLabel, categories, onSplitChange }) => {
+            const [activeTab, setActiveTab] = useState(dayLabel ? 'activities' : 'split');
+            const [activities, setActivities] = useState([]);
+            const [currentIdx, setCurrentIdx] = useState(0);
+            const [sessionNotes, setSessionNotes] = useState({});
+            const [allHistory, setAllHistory] = useState({});
+            const detailTouchRef = useRef(null);
+            const detailContentRef = useRef(null);
+
+            useEffect(() => {
+                if (!dayLabel) return;
+                const load = async () => {
+                    // Load ALL exercises that match the split's category (lowercase match)
+                    const allExercises = await dbOps.exercises.getAll();
+                    const splitLower = dayLabel.toLowerCase();
+                    const matching = allExercises.filter(ex => ex.category === splitLower);
+                    matching.sort((a, b) => (b.lastUsed || '').localeCompare(a.lastUsed || ''));
+                    setActivities(matching);
+
+                    const histMap = {};
+                    const noteMap = {};
+                    for (const ex of matching) {
+                        const allSets = await dbOps.sets.getByExerciseId(ex.id);
+                        const byDate = {};
+                        allSets.forEach(s => {
+                            if (!byDate[s.date]) byDate[s.date] = [];
+                            byDate[s.date].push(s);
+                        });
+                        histMap[ex.id] = Object.keys(byDate).sort().reverse().map(d => ({
+                            date: d, sets: byDate[d].sort((a, b) => a.setOrder - b.setOrder)
+                        }));
+                        const notes = await dbOps.sessionNotes.getByExerciseId(ex.id);
+                        notes.forEach(n => { noteMap[`${n.exerciseId}_${n.date}`] = n; });
+                    }
+                    setAllHistory(histMap);
+                    setSessionNotes(noteMap);
+                };
+                load();
+            }, [dayLabel]);
+
+            const handleDetailTouchStart = (e) => {
+                if (activeTab !== 'activities') return;
+                detailTouchRef.current = { startX: e.touches[0].clientX, startTime: Date.now() };
+            };
+            const handleDetailTouchEnd = (e) => {
+                if (!detailTouchRef.current || activeTab !== 'activities') return;
+                const dx = e.changedTouches[0].clientX - detailTouchRef.current.startX;
+                const dt = Date.now() - detailTouchRef.current.startTime;
+                detailTouchRef.current = null;
+                if (Math.abs(dx) > 60 && dt < 400) {
+                    const el = detailContentRef.current;
+                    const direction = dx > 0 ? 1 : -1;
+                    const newIdx = direction > 0 ? Math.max(0, currentIdx - 1) : Math.min(activities.length - 1, currentIdx + 1);
+                    if (newIdx !== currentIdx && el) {
+                        el.style.transform = `translateX(${direction * 80}px)`;
+                        el.style.opacity = '0';
+                        setTimeout(() => {
+                            el.style.transition = 'none';
+                            el.style.transform = `translateX(${-direction * 80}px)`;
+                            setCurrentIdx(newIdx);
+                            requestAnimationFrame(() => {
+                                el.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+                                el.style.transform = 'translateX(0)';
+                                el.style.opacity = '1';
+                            });
+                        }, 120);
+                    }
+                }
+            };
+
+            const handleSplitSelect = (split) => {
+                onSplitChange(split);
+                setActiveTab('activities');
+            };
+
+            const act = activities[currentIdx];
+            const history = act ? (allHistory[act.id] || []) : [];
+
+            const splitOptions = [...new Set([...(categories || [])].map(c => c.charAt(0).toUpperCase() + c.slice(1)))];
+
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal" style={{ height: '100vh', maxHeight: '100vh', top: 0, bottom: 0 }} onClick={(e) => e.stopPropagation()} onTouchStart={handleDetailTouchStart} onTouchEnd={handleDetailTouchEnd}>
+                        <div className="modal-header">
+                            <h2>{formatDateShort(date)}</h2>
+                            <button className="close-btn" onClick={onClose}>✕</button>
+                        </div>
+                        <div className="modal-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                            {dayLabel ? (
+                                <>
+                                    <div style={{ display: 'flex', gap: '0', marginBottom: '12px', flexShrink: 0 }}>
+                                        <button
+                                            onClick={() => setActiveTab('activities')}
+                                            style={{
+                                                flex: 1, padding: '10px 0', border: 'none', fontSize: '13px', fontWeight: '600',
+                                                cursor: 'pointer', WebkitAppearance: 'none',
+                                                background: activeTab === 'activities' ? '#8b3a62' : 'rgba(255,255,255,0.05)',
+                                                color: activeTab === 'activities' ? '#fff' : '#999',
+                                                borderRadius: '8px 0 0 8px',
+                                            }}
+                                        >
+                                            {dayLabel} Day Activities
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('split')}
+                                            style={{
+                                                flex: 1, padding: '10px 0', border: 'none', fontSize: '13px', fontWeight: '600',
+                                                cursor: 'pointer', WebkitAppearance: 'none',
+                                                background: activeTab === 'split' ? '#8b3a62' : 'rgba(255,255,255,0.05)',
+                                                color: activeTab === 'split' ? '#fff' : '#999',
+                                                borderRadius: '0 8px 8px 0',
+                                            }}
+                                        >
+                                            Change Split
+                                        </button>
+                                    </div>
+
+                                    {activeTab === 'activities' && (
+                                        <>
+                                            {activities.length > 0 && (
+                                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '4px 0 8px', gap: '8px', flexShrink: 0 }}>
+                                                    <button onClick={() => currentIdx > 0 && setCurrentIdx(currentIdx - 1)} style={{ background: 'none', border: 'none', color: currentIdx > 0 ? '#8b3a62' : '#333', fontSize: '18px', padding: '4px 8px', cursor: 'pointer', WebkitAppearance: 'none' }}>◀</button>
+                                                    <div style={{ fontSize: '14px', fontWeight: '700', color: '#e0e0e0', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'center', flex: 1 }}>{act?.name}</div>
+                                                    <button onClick={() => currentIdx < activities.length - 1 && setCurrentIdx(currentIdx + 1)} style={{ background: 'none', border: 'none', color: currentIdx < activities.length - 1 ? '#8b3a62' : '#333', fontSize: '18px', padding: '4px 8px', cursor: 'pointer', WebkitAppearance: 'none' }}>▶</button>
+                                                </div>
+                                            )}
+                                            {activities.length > 1 && (
+                                                <div style={{ padding: '0 0 8px', display: 'flex', justifyContent: 'center', gap: '6px', flexShrink: 0 }}>
+                                                    {activities.map((_, i) => (
+                                                        <div key={i} style={{ width: '7px', height: '7px', borderRadius: '50%', background: i === currentIdx ? '#e8c8d8' : 'rgba(232,200,216,0.25)', cursor: 'pointer', transition: 'background 0.2s' }} onClick={() => setCurrentIdx(i)} />
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <div ref={detailContentRef} style={{ flex: 1, overflow: 'auto', transition: 'transform 0.2s ease-out, opacity 0.2s ease-out' }}>
+                                                {history.length === 0 ? (
+                                                    <div style={{ textAlign: 'center', color: '#666', marginTop: 40 }}>No history yet for {act?.name}</div>
+                                                ) : (
+                                                    history.map((session, idx) => {
+                                                        const note = sessionNotes[`${act.id}_${session.date}`];
+                                                        return (
+                                                            <div key={idx} style={{ paddingBottom: '12px', marginBottom: '12px', borderBottom: idx < history.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                                                                <div className="history-date">{formatDateShort(session.date)}</div>
+                                                                <div className="set-boxes-container">
+                                                                    {session.sets.map((s, sidx) => (
+                                                                        <div key={sidx} className="set-box" style={{ backgroundColor: getSetBoxColor(sidx) }}>
+                                                                            {formatSetBox(s, session.sets[sidx - 1])}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                                {note && (
+                                                                    <div style={{ marginTop: '8px' }}>
+                                                                        {note.tags && note.tags.length > 0 && (
+                                                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '6px' }}>
+                                                                                {note.tags.map(tag => (
+                                                                                    <span key={tag} style={{ padding: '2px 8px', borderRadius: '12px', background: 'rgba(139, 58, 98, 0.2)', color: '#7b93f5', fontSize: '11px' }}>{tag}</span>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                        {note.formCueText && <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}><strong>Form:</strong> {note.formCueText}</div>}
+                                                                        {note.freeText && <div style={{ fontSize: '12px', color: '#999' }}>{note.freeText}</div>}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })
+                                                )}
+                                            </div>
+                                            {activities.length === 0 && (
+                                                <div style={{ textAlign: 'center', color: '#666', marginTop: 40 }}>No {dayLabel.toLowerCase()} activities found yet</div>
+                                            )}
+                                        </>
+                                    )}
+                                </>
+                            ) : (
+                                <div style={{ textAlign: 'center', color: '#666', marginTop: 40, padding: '0 20px' }}>
+                                    <div style={{ fontSize: '15px', marginBottom: '20px' }}>Assign a split category to today</div>
+                                </div>
+                            )}
+
+                            {(activeTab === 'split' || !dayLabel) && (
+                                <div style={{ padding: '8px 0' }}>
+                                    <div className="button-grid">
+                                        {splitOptions.map(opt => (
+                                            <button
+                                                key={opt}
+                                                className={`btn ${dayLabel === opt ? 'active' : ''}`}
+                                                onClick={() => handleSplitSelect(opt)}
+                                            >
+                                                {opt}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {dayLabel && (
+                                        <button
+                                            className="btn btn-secondary"
+                                            onClick={() => { onSplitChange(''); onClose(); }}
+                                            style={{ marginTop: '8px' }}
+                                        >
+                                            Remove Split
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        function App() {
+            const [currentDate, setCurrentDate] = useState(getTodayString());
+            const [daySets, setDaySets] = useState([]);
+            const [dayLabel, setDayLabel] = useState('');
+            const [modal, setModal] = useState(null);
+            const [selectedExercise, setSelectedExercise] = useState(null);
+            const [selectedWeight, setSelectedWeight] = useState(null);
+            const [previousWeight, setPreviousWeight] = useState(null);
+            const [loggedSetCount, setLoggedSetCount] = useState(0);
+            const [confirmation, setConfirmation] = useState(null);
+            const [expandedExercise, setExpandedExercise] = useState(null);
+            const [selectedSetForEdit, setSelectedSetForEdit] = useState(null);
+            const [setNumber, setSetNumber] = useState(1);
+            const [categories, setCategories] = useState(['push', 'pull', 'legs', 'core', 'cardio', 'mobility', 'stretch', 'other']);
+            const touchRef = useRef(null);
+            const contentRef = useRef(null);
+            const longPressRef = useRef(null);
+
+            const handleTouchStart = useCallback((e) => {
+                if (modal) return; // Don't swipe when a modal is open
+                const touch = e.touches[0];
+                touchRef.current = { startX: touch.clientX, startY: touch.clientY, startTime: Date.now() };
+            }, [modal]);
+
+            const handleTouchEnd = useCallback((e) => {
+                if (!touchRef.current || modal) return;
+                const touch = e.changedTouches[0];
+                const dx = touch.clientX - touchRef.current.startX;
+                const dy = touch.clientY - touchRef.current.startY;
+                const dt = Date.now() - touchRef.current.startTime;
+                touchRef.current = null;
+                if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 2 && dt < 400) {
+                    const direction = dx > 0 ? 1 : -1; // 1=right(prev), -1=left(next)
+                    const el = contentRef.current;
+                    if (el) {
+                        // Slide out
+                        el.style.transform = `translateX(${direction * 100}px)`;
+                        el.style.opacity = '0';
+                        setTimeout(() => {
+                            // Jump to opposite side (invisible)
+                            el.style.transition = 'none';
+                            el.style.transform = `translateX(${-direction * 100}px)`;
+                            // Update date
+                            setCurrentDate(prev => addDays(prev, direction > 0 ? -1 : 1));
+                            // Force reflow then slide in
+                            requestAnimationFrame(() => {
+                                el.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
+                                el.style.transform = 'translateX(0)';
+                                el.style.opacity = '1';
+                            });
+                        }, 150);
+                    } else {
+                        setCurrentDate(prev => addDays(prev, direction > 0 ? -1 : 1));
+                    }
+                }
+            }, [modal]);
+
+            const loadDayData = useCallback(async () => {
+                const sets = await dbOps.sets.getByDate(currentDate);
+                setDaySets(sets);
+
+                // Check for per-day split first
+                const splitRecord = await dbOps.dayNotes.get(`__split_${currentDate}`);
+                if (splitRecord && splitRecord.note) {
+                    setDayLabel(splitRecord.note);
+                } else {
+                    // No per-day split stored — derive from weekly template
+                    const d = parseLocalDate(currentDate);
+                    const dayOfWeek = d.getDay();
+                    const template = await dbOps.templates.get(dayOfWeek);
+                    const templateLabel = template?.label || '';
+                    setDayLabel(templateLabel);
+                    // Bake the template split into per-day storage for today and past days
+                    if (templateLabel && currentDate <= getTodayString()) {
+                        await dbOps.dayNotes.set(`__split_${currentDate}`, templateLabel);
+                    }
+                }
+            }, [currentDate]);
+
+            const setDaySplit = async (date, split) => {
+                await dbOps.dayNotes.set(`__split_${date}`, split);
+                if (date === currentDate) setDayLabel(split);
+            };
+
+            useEffect(() => {
+                initDB().then(async () => {
+                    await loadDayData();
+                    const cats = await getCategories();
+                    setCategories(cats);
+                });
+            }, [currentDate, loadDayData]);
+
+            const handleExerciseSelect = async (exercise) => {
+                if (!exercise) {
+                    setModal(null);
+                    return;
+                }
+
+                setSelectedExercise(exercise);
+                setModal('activityHistory');
+            };
+
+            const handleCreateExercise = async (exercise) => {
+                setSelectedExercise(exercise);
+                setModal('activityHistory');
+            };
+
+            const handleLogSet = async () => {
+                const daySets = await dbOps.sets.getByDate(currentDate);
+                const exerciseSets = daySets.filter(s => s.exerciseId === selectedExercise.id);
+                setSetNumber(exerciseSets.length + 1);
+                setModal('weightPicker');
+
+                const lastSetForExercise = exerciseSets.sort((a, b) => b.setOrder - a.setOrder)[0];
+                setPreviousWeight(lastSetForExercise?.weight || null);
+            };
+
+            const handleWeightSelected = async (weightData) => {
+                if (!weightData) {
+                    setModal(null);
+                    setSelectedExercise(null);
+                    setSelectedWeight(null);
+                    setPreviousWeight(null);
+                    return;
+                }
+
+                setSelectedWeight(weightData);
+
+                if (selectedExercise.type === 'timed') {
+                    setModal('timedDuration');
+                } else {
+                    setModal('repPicker');
+                }
+            };
+
+            const handleRepsSelected = async (reps) => {
+                if (reps === null) {
+                    setModal(null);
+                    setSelectedExercise(null);
+                    setSelectedWeight(null);
+                    setPreviousWeight(null);
+                    return;
+                }
+
+                const daySets = await dbOps.sets.getByDate(currentDate);
+                let exerciseOrder = 1;
+                const existingExercise = daySets.filter(s => s.exerciseId === selectedExercise.id);
+                if (existingExercise.length === 0) {
+                    exerciseOrder = Math.max(...daySets.map(s => s.exerciseOrder), 0) + 1;
+                } else {
+                    exerciseOrder = existingExercise[0].exerciseOrder;
+                }
+
+                const setOrder = existingExercise.length + 1;
+
+                const set = {
+                    id: generateId('set'),
+                    date: currentDate,
+                    exerciseId: selectedExercise.id,
+                    exerciseName: selectedExercise.name,
+                    exerciseOrder,
+                    setOrder,
+                    weight: selectedWeight.weight,
+                    weightType: selectedWeight.weightType,
+                    reps,
+                    duration: null,
+                    createdAt: Date.now(),
+                };
+
+                await dbOps.sets.add(set);
+
+                selectedExercise.lastUsed = currentDate;
+                await dbOps.exercises.update(selectedExercise);
+
+                setLoggedSetCount(loggedSetCount + 1);
+                setModal(null);
+                setSelectedExercise(null);
+                setSelectedWeight(null);
+                setPreviousWeight(null);
+
+                await loadDayData();
+            };
+
+            const handleDurationSelected = async (duration) => {
+                if (duration === null) {
+                    setModal(null);
+                    setSelectedExercise(null);
+                    setSelectedWeight(null);
+                    setPreviousWeight(null);
+                    return;
+                }
+
+                const daySets = await dbOps.sets.getByDate(currentDate);
+                let exerciseOrder = 1;
+                const existingExercise = daySets.filter(s => s.exerciseId === selectedExercise.id);
+                if (existingExercise.length === 0) {
+                    exerciseOrder = Math.max(...daySets.map(s => s.exerciseOrder), 0) + 1;
+                } else {
+                    exerciseOrder = existingExercise[0].exerciseOrder;
+                }
+
+                const setOrder = existingExercise.length + 1;
+
+                const set = {
+                    id: generateId('set'),
+                    date: currentDate,
+                    exerciseId: selectedExercise.id,
+                    exerciseName: selectedExercise.name,
+                    exerciseOrder,
+                    setOrder,
+                    weight: selectedWeight.weight || null,
+                    weightType: selectedWeight.weightType,
+                    reps: null,
+                    duration,
+                    createdAt: Date.now(),
+                };
+
+                await dbOps.sets.add(set);
+
+                selectedExercise.lastUsed = currentDate;
+                await dbOps.exercises.update(selectedExercise);
+
+                setLoggedSetCount(loggedSetCount + 1);
+                setModal(null);
+                setSelectedExercise(null);
+                setSelectedWeight(null);
+                setPreviousWeight(null);
+
+                await loadDayData();
+            };
+
+            const handleDeleteSet = async (setId) => {
+                await dbOps.sets.delete(setId);
+                await loadDayData();
+            };
+
+            const handleEditSet = async (set) => {
+                setSelectedSetForEdit(set);
+                setSelectedExercise(await dbOps.exercises.get(set.exerciseId));
+                setSelectedWeight({
+                    weight: set.weight,
+                    weightType: set.weightType,
+                });
+
+                if (set.reps) {
+                    setModal('repPicker');
+                } else {
+                    setModal('timedDuration');
+                }
+            };
+
+            const handleDeleteExercise = (exercise) => {
+                setConfirmation({
+                    title: `Delete ${exercise.exerciseName}?`,
+                    message: `Remove ${exercise.exerciseName} and all its sets from today?`,
+
+                    onConfirm: async () => {
+                        const daySets = await dbOps.sets.getByDate(currentDate);
+                        const toDelete = daySets.filter(s => s.exerciseId === exercise.exerciseId);
+                        for (const set of toDelete) {
+                            await dbOps.sets.delete(set.id);
+                        }
+                        setConfirmation(null);
+                        await loadDayData();
+                    },
+                    onCancel: () => setConfirmation(null),
+                });
+            };
+
+            const handleMenuClick = (exercise, action) => {
+                if (action === 'delete') {
+                    handleDeleteExercise(exercise);
+                } else if (action === 'sessionNote') {
+                    setSelectedExercise(exercise.sets[0] ? { id: exercise.exerciseId, name: exercise.exerciseName, type: 'reps' } : null);
+                    dbOps.exercises.get(exercise.exerciseId).then(ex => {
+                        setSelectedExercise(ex);
+                        setModal('sessionNote');
+                    });
+                } else if (action === 'viewHistory') {
+                    setSelectedExercise(exercise.sets[0] ? { id: exercise.exerciseId, name: exercise.exerciseName, type: 'reps' } : null);
+                    dbOps.exercises.get(exercise.exerciseId).then(ex => {
+                        setSelectedExercise(ex);
+                        setModal('history');
+                    });
+                } else if (action === 'rename') {
+                    setSelectedExercise(exercise.sets[0] ? { id: exercise.exerciseId, name: exercise.exerciseName, type: 'reps' } : null);
+                    dbOps.exercises.get(exercise.exerciseId).then(ex => {
+                        setSelectedExercise(ex);
+                        setModal('rename');
+                    });
+                } else if (action === 'changeCategory') {
+                    setSelectedExercise(exercise.sets[0] ? { id: exercise.exerciseId, name: exercise.exerciseName, type: 'reps' } : null);
+                    dbOps.exercises.get(exercise.exerciseId).then(ex => {
+                        setSelectedExercise(ex);
+                        setModal('changeCategory');
+                    });
+                }
+            };
+
+            const groupedExercises = {};
+            daySets.forEach(set => {
+                if (!groupedExercises[set.exerciseId]) {
+                    groupedExercises[set.exerciseId] = {
+                        exerciseId: set.exerciseId,
+                        exerciseName: set.exerciseName,
+                        sets: [],
+                    };
+                }
+                groupedExercises[set.exerciseId].sets.push(set);
+            });
+
+            const exercises = Object.values(groupedExercises).sort((a, b) => {
+                const aOrder = a.sets[0]?.exerciseOrder || 0;
+                const bOrder = b.sets[0]?.exerciseOrder || 0;
+                return aOrder - bOrder;
+            });
+
+            const RenameModal = ({ exercise, onSave, onCancel }) => {
+                const [newName, setNewName] = useState(exercise.name);
+
+                const handleSave = async () => {
+                    if (!newName.trim()) return;
+
+                    exercise.name = newName.trim();
+                    await dbOps.exercises.update(exercise);
+
+                    const allSets = await dbOps.sets.getByExerciseId(exercise.id);
+                    for (const set of allSets) {
+                        set.exerciseName = newName.trim();
+                        await dbOps.sets.update(set);
+                    }
+
+                    onSave();
+                };
+
+                return (
+                    <div className="modal-overlay" onClick={onCancel}>
+                        <div className="modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h2>Rename Activity</h2>
+                                <button className="close-btn" onClick={onCancel}>✕</button>
+                            </div>
+                            <div className="modal-content">
+                                <div className="form-group">
+                                    <label className="form-label">Activity Name</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        value={newName}
+                                        onChange={(e) => setNewName(e.target.value)}
+                                        autoFocus
+                                    />
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button className="btn btn-secondary" onClick={onCancel}>Cancel</button>
+                                <button className="btn" onClick={handleSave}>Save</button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="app-container">
+                    <div className="top-nav">
+                        <div className="nav-title">Fitness Tracker</div>
+                        <button className="settings-btn" onClick={() => { setExpandedExercise(null); setModal('settings'); }}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b3a62" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div className="day-nav">
+                        <button className="nav-arrow" onClick={() => setCurrentDate(addDays(currentDate, -1))}>◀</button>
+                        <div className="day-display"
+                            onClick={() => setModal('dayDetail')}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            <div className="day-date">{formatDate(currentDate)}</div>
+                            {dayLabel && <div className="day-label">{dayLabel}</div>}
+                        </div>
+                        <button className="nav-arrow" onClick={() => setCurrentDate(addDays(currentDate, 1))}>▶</button>
+                    </div>
+
+                    <div className="content" ref={contentRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+                        <div className="content-padding">
+                            {exercises.length === 0 ? (
+                                <div className="empty-state">
+                                    {currentDate === getTodayString() ? (
+                                        <>No activities logged yet today.</>
+                                    ) : (
+                                        <>No activities on this day.</>
+                                    )}
+                                </div>
+                            ) : (
+                                exercises.map((exercise) => {
+                                    const isExpanded = expandedExercise === exercise.exerciseId;
+                                    return (
+                                        <div key={exercise.exerciseId} className="exercise-group" style={isExpanded ? { border: '1px solid rgba(139, 58, 98, 0.12)', borderRadius: '12px', padding: '12px', background: 'rgba(139, 58, 98, 0.03)' } : {}}>
+                                            <div
+                                                className="exercise-collapsible"
+                                                onClick={() => setExpandedExercise(isExpanded ? null : exercise.exerciseId)}
+                                            >
+                                                <div className="exercise-toggle-header">
+                                                    <div className="exercise-chevron">{isExpanded ? '▾' : '▸'}</div>
+                                                    <div className="exercise-name">{exercise.exerciseName}</div>
+                                                </div>
+                                                <div className="set-boxes-container">
+                                                    {exercise.sets.map((set, idx) => (
+                                                        <div
+                                                            key={set.id}
+                                                            className="set-box"
+                                                            style={{ backgroundColor: getSetBoxColor(idx) }}
+                                                            onClick={() => isExpanded && handleEditSet(set)}
+                                                        >
+                                                            <div className="set-box-content">
+                                                                {formatSetBox(set, exercise.sets[idx - 1])}
+                                                            </div>
+                                                            {isExpanded && (
+                                                                <button
+                                                                    className="set-box-delete-inline"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDeleteSet(set.id);
+                                                                    }}
+                                                                >
+                                                                    ✕
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {isExpanded && (
+                                                <div style={{ display: 'flex', gap: '8px', marginTop: '6px', alignItems: 'center' }}>
+                                                    <button
+                                                        className="btn btn-add-set"
+                                                        style={{ flex: 1, marginBottom: 0 }}
+                                                        onClick={() => {
+                                                            setSelectedExercise({ id: exercise.exerciseId, name: exercise.exerciseName, type: exercise.sets[0]?.type || 'reps' });
+                                                            setPreviousWeight(exercise.sets[exercise.sets.length - 1]?.weight || null);
+                                                            setSetNumber(exercise.sets.length + 1);
+                                                            setModal('weightPicker');
+                                                        }}
+                                                    >
+                                                        + Add Set
+                                                    </button>
+                                                    <button
+                                                        className="exercise-menu-btn"
+                                                        onClick={(e) => { e.stopPropagation(); setModal(`menu-${exercise.exerciseId}`); }}
+                                                        style={{ width: 'auto', padding: '4px 12px', fontSize: '14px', color: '#999' }}
+                                                    >
+                                                        ⋯
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {!isExpanded && (
+                                                <button
+                                                    className="exercise-menu-btn"
+                                                    onClick={() => setModal(`menu-${exercise.exerciseId}`)}
+                                                    style={{ position: 'absolute', right: '16px', top: '0' }}
+                                                >
+                                                    ···
+                                                </button>
+                                            )}
+                                        </div>
+                                    );
+                                })
+                            )}
+
+                            <button className="btn" onClick={() => setModal('exercisePicker')}>
+                                + Add Activity
+                            </button>
+                        </div>
+                    </div>
+
+                    {modal === 'exercisePicker' && (
+                        <ExercisePickerModal
+                            onSelect={handleExerciseSelect}
+                            categories={categories}
+                            onCategoriesChanged={(newCats) => setCategories(newCats)}
+                            onCreateNew={() => {
+                                setModal('createExercise');
+                            }}
+                            selectedDate={currentDate}
+                            defaultCategory={dayLabel ? dayLabel.toLowerCase() : 'all'}
+                        />
+                    )}
+
+                    {modal === 'createExercise' && (
+                        <CreateExerciseModal
+                        categories={categories}
+                        onSave={handleCreateExercise}
+                        onCancel={() => setModal('exercisePicker')}
+                        />
+                    )}
+
+                    {modal === 'activityHistory' && selectedExercise && (
+                        <HistoryModal
+                            exercise={selectedExercise}
+                            onLogSet={handleLogSet}
+                            onClose={() => {
+                                setModal('exercisePicker');
+                                setSelectedExercise(null);
+                            }}
+                        />
+                    )}
+
+                    {modal === 'weightPicker' && selectedExercise && (
+                        <WeightPickerModal
+                            exercise={selectedExercise}
+                            onSelectWeight={handleWeightSelected}
+                            selectedDate={currentDate}
+                            previousWeight={previousWeight}
+                            setNumber={setNumber}
+                        />
+                    )}
+
+                    {modal === 'repPicker' && selectedExercise && selectedWeight && (
+                        <RepPickerModal
+                            exercise={selectedExercise}
+                            weight={selectedWeight.weight}
+                            weightType={selectedWeight.weightType}
+                            onSelectReps={handleRepsSelected}
+                            setNumber={setNumber}
+                        />
+                    )}
+
+                    {modal === 'timedDuration' && selectedExercise && selectedWeight && (
+                        <TimedDurationModal
+                            exercise={selectedExercise}
+                            weight={selectedWeight.weight}
+                            weightType={selectedWeight.weightType}
+                            onSelectDuration={handleDurationSelected}
+                            setNumber={setNumber}
+                        />
+                    )}
+
+                    {modal === 'settings' && (
+                        <SettingsModal onClose={() => { setModal(null); loadDayData(); }} categories={categories} onCategoriesChanged={(cats) => setCategories(cats)} />
+                    )}
+
+                    {modal === 'sessionNote' && selectedExercise && (
+                        <SessionNoteModal
+                            exercise={selectedExercise}
+                            date={currentDate}
+                            onSave={() => {
+                                setModal(null);
+                                setSelectedExercise(null);
+                                loadDayData();
+                            }}
+                            onCancel={() => {
+                                setModal(null);
+                                setSelectedExercise(null);
+                            }}
+                        />
+                    )}
+
+                    {modal === 'changeCategory' && selectedExercise && (
+                        <ChangeCategoryModal
+                            exercise={selectedExercise}
+                            categories={categories}
+                            dayLabel={dayLabel}
+                            onSave={() => {
+                                setModal(null);
+                                setSelectedExercise(null);
+                                loadDayData();
+                            }}
+                            onCancel={() => {
+                                setModal(null);
+                                setSelectedExercise(null);
+                            }}
+                        />
+                    )}
+
+                    {modal === 'rename' && selectedExercise && (
+                        <RenameModal
+                            exercise={selectedExercise}
+                            onSave={() => {
+                                setModal(null);
+                                setSelectedExercise(null);
+                                loadDayData();
+                            }}
+                            onCancel={() => {
+                                setModal(null);
+                                setSelectedExercise(null);
+                            }}
+                        />
+                    )}
+
+                    {modal === 'history' && selectedExercise && (
+                        <HistoryModal
+                            exercise={selectedExercise}
+                            onClose={() => {
+                                setModal(null);
+                                setSelectedExercise(null);
+                            }}
+                        />
+                    )}
+
+                    {modal === 'dayDetail' && (
+                        <DayDetailModal
+                            date={currentDate}
+                            dayLabel={dayLabel}
+                            categories={categories}
+                            onClose={() => setModal(null)}
+                            onSplitChange={async (newSplit) => {
+                                await setDaySplit(currentDate, newSplit);
+                                await loadDayData();
+                            }}
+                        />
+                    )}
+
+                    {modal?.startsWith('menu-') && (
+                        (() => {
+                            const exerciseId = modal.replace('menu-', '');
+                            const exercise = exercises.find(e => e.exerciseId === exerciseId);
+                            if (exercise) {
+                                return (
+                                    <div className="modal-overlay" onClick={() => setModal(null)}>
+                                        <div className="context-menu" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: '#1e0e14', borderRadius: '12px', padding: '8px 0', border: '1px solid rgba(139, 58, 98, 0.2)' }}>
+                                            <div
+                                                className="context-menu-item"
+                                                style={{ padding: '14px 20px', color: '#c77da0', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}
+                                                onClick={() => {
+                                                    handleMenuClick(exercise, 'viewHistory');
+                                                    setModal(null);
+                                                }}
+                                            >
+                                                View History
+                                            </div>
+                                            <div
+                                                className="context-menu-item"
+                                                style={{ padding: '14px 20px', color: '#c77da0', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}
+                                                onClick={() => {
+                                                    handleMenuClick(exercise, 'sessionNote');
+                                                    setModal(null);
+                                                }}
+                                            >
+                                                Session Note
+                                            </div>
+
+                                            <div
+                                                className="context-menu-item"
+                                                style={{ padding: '14px 20px', color: '#c77da0', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}
+                                                onClick={() => {
+                                                    handleMenuClick(exercise, 'changeCategory');
+                                                    setModal(null);
+                                                }}
+                                            >
+                                                Add to Split
+                                            </div>
+                                            <div
+                                                className="context-menu-item"
+                                                style={{ padding: '14px 20px', color: '#c77da0', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}
+                                                onClick={() => {
+                                                    handleMenuClick(exercise, 'rename');
+                                                    setModal(null);
+                                                }}
+                                            >
+                                                Rename
+                                            </div>
+                                            <div
+                                                className="context-menu-item danger"
+                                                style={{ padding: '14px 20px', color: '#ff6b6b', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}
+                                                onClick={() => {
+                                                    handleMenuClick(exercise, 'delete');
+                                                    setModal(null);
+                                                }}
+                                            >
+                                                Delete Activity
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                        })()
+                    )}
+
+                    {confirmation && (
+                        <ConfirmationDialog
+                            title={confirmation.title}
+                            message={confirmation.message}
+                            onConfirm={confirmation.onConfirm}
+                            onCancel={confirmation.onCancel}
+                        />
+                    )}
+                </div>
+            );
+        }
+
+        class ErrorBoundary extends React.Component {
+            constructor(props) { super(props); this.state = { error: null }; }
+            static getDerivedStateFromError(error) { return { error }; }
+            render() {
+                if (this.state.error) {
+                    return React.createElement('div', { style: { color: 'red', padding: '20px', fontSize: '14px' } },
+                        React.createElement('h2', null, 'App Error'),
+                        React.createElement('pre', { style: { whiteSpace: 'pre-wrap' } }, this.state.error.toString()),
+                        React.createElement('pre', { style: { whiteSpace: 'pre-wrap', fontSize: '11px', marginTop: '10px' } }, this.state.error.stack)
+                    );
+                }
+                return this.props.children;
+            }
+        }
+        ReactDOM.render(<ErrorBoundary><App /></ErrorBoundary>, document.getElementById('root'));
+    </script>
+</body>
+</html>
