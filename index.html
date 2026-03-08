@@ -71,6 +71,29 @@
             to { transform: translateY(0); }
         }
 
+        @keyframes pillGlow {
+            0% { box-shadow: 0 0 0px rgba(255,255,255,0); }
+            50% { box-shadow: 0 0 12px rgba(255,255,255,0.8); }
+            100% { box-shadow: 0 0 0px rgba(255,255,255,0); }
+        }
+
+        @keyframes unlockHintFade {
+            0% { opacity: 0; transform: translateY(-50%) translateX(4px); }
+            20% { opacity: 1; transform: translateY(-50%) translateX(0); }
+            80% { opacity: 1; transform: translateY(-50%) translateX(0); }
+            100% { opacity: 0; transform: translateY(-50%) translateX(-4px); }
+        }
+
+        /* CHANGE 8: Flag shimmer animation for bodyweight banner */
+        @keyframes flagShimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes flagShimmerSlow {
+            0%, 85% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
         .modal-header {
             padding: 16px;
             border-bottom: 1px solid #333;
@@ -740,6 +763,16 @@
             color: #666;
         }
 
+        /* Hide number input spinners */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
         .form-select {
             width: 100%;
             padding: 12px;
@@ -1083,8 +1116,107 @@
             });
         };
 
+        const bootstrapDefaultExercises = async () => {
+            // Disabled - no longer auto-bootstrap exercises
+        };
+
         const generateId = (prefix) => {
             return prefix + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        };
+
+        const exerciseSplitRecommendations = {
+            // Push exercises
+            'bench press': ['push', 'upper', 'chest'],
+            'incline bench press': ['push', 'upper', 'chest'],
+            'decline bench press': ['push', 'chest'],
+            'dumbbell bench press': ['push', 'upper', 'chest'],
+            'overhead press': ['push', 'upper', 'shoulders'],
+            'military press': ['push', 'upper', 'shoulders'],
+            'shoulder press': ['push', 'upper', 'shoulders'],
+            'arnold press': ['push', 'shoulders'],
+            'dumbbell shoulder press': ['push', 'upper', 'shoulders'],
+            'push ups': ['push', 'upper', 'chest'],
+            'dips': ['push', 'upper', 'chest'],
+            'tricep pushdown': ['push', 'upper', 'arms'],
+            'tricep extension': ['push', 'arms'],
+            'skull crushers': ['push', 'arms'],
+            'close grip bench': ['push', 'arms', 'chest'],
+            'cable fly': ['push', 'chest'],
+            'chest fly': ['push', 'chest'],
+            'pec deck': ['push', 'chest'],
+            'lateral raise': ['push', 'shoulders'],
+            'front raise': ['push', 'shoulders'],
+            'face pulls': ['pull', 'shoulders'],
+            // Pull exercises
+            'pull ups': ['pull', 'upper', 'back'],
+            'chin ups': ['pull', 'upper', 'back'],
+            'lat pulldown': ['pull', 'upper', 'back'],
+            'barbell row': ['pull', 'upper', 'back'],
+            'bent over row': ['pull', 'upper', 'back'],
+            'dumbbell row': ['pull', 'upper', 'back'],
+            'cable row': ['pull', 'back'],
+            'seated row': ['pull', 'back'],
+            't-bar row': ['pull', 'back'],
+            'deadlift': ['pull', 'back', 'legs'],
+            'barbell curl': ['pull', 'arms'],
+            'dumbbell curl': ['pull', 'arms'],
+            'hammer curl': ['pull', 'arms'],
+            'preacher curl': ['pull', 'arms'],
+            'concentration curl': ['pull', 'arms'],
+            'reverse fly': ['pull', 'back', 'shoulders'],
+            'shrugs': ['pull', 'upper', 'back'],
+            // Leg exercises
+            'squat': ['legs', 'lower'],
+            'back squat': ['legs', 'lower'],
+            'front squat': ['legs', 'lower'],
+            'goblet squat': ['legs', 'lower'],
+            'leg press': ['legs', 'lower'],
+            'lunges': ['legs', 'lower'],
+            'walking lunges': ['legs', 'lower'],
+            'bulgarian split squat': ['legs', 'lower'],
+            'leg extension': ['legs', 'lower'],
+            'leg curl': ['legs', 'lower'],
+            'hamstring curl': ['legs', 'lower'],
+            'romanian deadlift': ['legs', 'lower', 'pull'],
+            'stiff leg deadlift': ['legs', 'lower'],
+            'hip thrust': ['legs', 'lower', 'glutes'],
+            'glute bridge': ['legs', 'lower', 'glutes'],
+            'calf raise': ['legs', 'lower'],
+            'seated calf raise': ['legs', 'lower'],
+            'step ups': ['legs', 'lower'],
+            'hack squat': ['legs', 'lower'],
+            'sumo deadlift': ['legs', 'lower', 'pull'],
+            // Core
+            'plank': ['core', 'abs'],
+            'crunches': ['core', 'abs'],
+            'sit ups': ['core', 'abs'],
+            'russian twist': ['core', 'abs'],
+            'leg raise': ['core', 'abs'],
+            'hanging leg raise': ['core', 'abs'],
+            'cable crunch': ['core', 'abs'],
+            'ab wheel': ['core', 'abs'],
+            'mountain climbers': ['core', 'abs', 'cardio'],
+            'woodchoppers': ['core', 'abs'],
+            // Cardio
+            'running': ['cardio'],
+            'cycling': ['cardio'],
+            'rowing': ['cardio'],
+            'swimming': ['cardio'],
+            'jump rope': ['cardio'],
+            'stair climber': ['cardio'],
+            'elliptical': ['cardio'],
+            'walking': ['cardio'],
+            'sprints': ['cardio', 'legs'],
+            'burpees': ['cardio', 'full body'],
+            // Full body / compound
+            'clean and press': ['full body', 'upper', 'legs'],
+            'snatch': ['full body'],
+            'clean': ['full body', 'pull', 'legs'],
+            'kettlebell swing': ['full body', 'legs', 'pull'],
+            'thrusters': ['full body', 'push', 'legs'],
+            'farmers walk': ['full body', 'grip'],
+            'battle ropes': ['cardio', 'upper'],
+            'box jump': ['legs', 'cardio'],
         };
 
         const dbOps = {
@@ -1373,29 +1505,31 @@
         const getSetBoxColor = (index) => {
             const colors = [
                 'rgba(67, 97, 238, 0.3)',     // blue
-                'rgba(139, 58, 98, 0.35)',    // mauve
-                'rgba(76, 201, 240, 0.3)',    // teal
                 'rgba(255, 209, 102, 0.3)',   // yellow
+                'rgba(76, 201, 240, 0.3)',    // teal
             ];
             return colors[index % colors.length];
         };
 
-        const formatSetBox = (set, previousSet) => {
+        const formatSetBox = (set, previousSet, unitOverride) => {
             let box = '';
+            const displayUnit = unitOverride || 'lbs';
 
             if (!previousSet || set.weight !== previousSet.weight || set.weightType !== previousSet.weightType) {
                 if (set.weightType === 'bodyweight') {
                     box += 'BW ';
                 } else if (set.weightType === 'banded') {
-                    const bandLabel = (set.bandedColor && set.bandedColor !== 'undefined') ? `${set.bandedColor} Band` : 'Band';
+                    // CHANGE 6: Display bandedColor instead of generic "Band"
+                    const bandLabel = (set.bandedColor && set.bandedColor !== 'undefined') ? set.bandedColor : 'Band';
                     box += bandLabel + ' ';
                 } else if (set.weight !== null && set.weight !== undefined && !isNaN(set.weight)) {
-                    box += `${set.weight}lbs `;
+                    const perSide = set.weightMeaning === 'per-side' ? ' ×2' : '';
+                    box += `${set.weight}${displayUnit}${perSide} `;
                 }
             }
 
             if (set.reps !== null) {
-                box += `${set.reps}r`;
+                box += `× ${set.reps}`;
             } else if (set.duration !== null) {
                 const mins = Math.floor(set.duration / 60);
                 const secs = set.duration % 60;
@@ -1419,8 +1553,15 @@
                 }
             };
 
-            const removeCategory = (cat) => {
+            const removeCategory = async (cat) => {
                 setCats(cats.filter(c => c !== cat));
+                // CHANGE 2: Reset any days in weeklyTemplate that reference this category
+                const currentTemps = await dbOps.templates.getAll();
+                for (const template of currentTemps) {
+                    if (template.label === cat) {
+                        await dbOps.templates.set(template.dayOfWeek, '');
+                    }
+                }
             };
 
             return (
@@ -1577,10 +1718,43 @@
             );
         };
 
-        const CreateExerciseModal = ({ onSave, onCancel, categories }) => {
+        const CreateExerciseModal = ({ onSave, onCancel, categories, dayLabel }) => {
             const [name, setName] = useState('');
-            const [category, setCategory] = useState(categories[0] || 'push');
+            const [category, setCategory] = useState(dayLabel && categories.includes(dayLabel.toLowerCase()) ? dayLabel.toLowerCase() : '__none__');
             const [type, setType] = useState('reps');
+            const [weightMeaning, setWeightMeaning] = useState('total');
+            const [recommendation, setRecommendation] = useState(null);
+
+            const handleRecommend = () => {
+                const searchName = name.trim().toLowerCase();
+                if (!searchName) return;
+
+                // Try exact match first, then partial
+                let matches = exerciseSplitRecommendations[searchName];
+                if (!matches) {
+                    // Partial match
+                    const key = Object.keys(exerciseSplitRecommendations).find(k =>
+                        k.includes(searchName) || searchName.includes(k)
+                    );
+                    if (key) matches = exerciseSplitRecommendations[key];
+                }
+
+                if (matches) {
+                    // Find first match in user's categories
+                    const match = matches.find(m => categories.includes(m));
+                    if (match) {
+                        setCategory(match);
+                        setRecommendation(match);
+                    } else {
+                        setRecommendation('no-match');
+                    }
+                } else {
+                    setRecommendation('unknown');
+                }
+
+                // Clear recommendation after 3 seconds
+                setTimeout(() => setRecommendation(null), 3000);
+            };
 
             const handleSave = async () => {
                 if (!name.trim()) return;
@@ -1588,8 +1762,9 @@
                 const exercise = {
                     id: generateId('ex'),
                     name: name.trim(),
-                    category,
+                    category: category === '__none__' ? '' : category,
                     type,
+                    weightMeaning,
                     note: '',
                     lastUsed: getTodayString(),
                     createdAt: Date.now(),
@@ -1617,10 +1792,35 @@
                                     onChange={(e) => setName(e.target.value)}
                                     autoFocus
                                 />
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                                    <button
+                                        onClick={handleRecommend}
+                                        className="btn btn-secondary"
+                                        style={{ flex: 1, fontSize: '11px' }}
+                                    >
+                                        Recommend Split
+                                    </button>
+                                </div>
+                                {recommendation && (
+                                    <div style={{ fontSize: '11px', marginTop: '6px', textAlign: 'center', color: recommendation === 'no-match' ? '#999' : recommendation === 'unknown' ? '#999' : '#90ee90' }}>
+                                        {recommendation === 'no-match'
+                                            ? 'Recommended splits not in your categories'
+                                            : recommendation === 'unknown'
+                                            ? 'Exercise not in database'
+                                            : `✓ Recommended: ${recommendation.charAt(0).toUpperCase() + recommendation.slice(1)}`}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="form-group">
                                 <label className="form-label">Category</label>
+                                <button
+                                    onClick={() => setCategory('__none__')}
+                                    className={`btn ${category === '__none__' ? '' : 'btn-secondary'}`}
+                                    style={{ width: '100%', marginBottom: '8px' }}
+                                >
+                                    Do Not Assign to a Split
+                                </button>
                                 <div className="button-grid">
                                     {categories.map(cat => (
                                         <button
@@ -1673,6 +1873,38 @@
                                 </div>
                             </div>
 
+                            {type === 'reps' && (
+                                <div className="form-group">
+                                    <label className="form-label">Weight Means</label>
+                                    <div className="button-row" style={{ gap: '4px' }}>
+                                        <button
+                                            className={`btn ${weightMeaning === 'total' ? '' : 'btn-secondary'}`}
+                                            onClick={() => setWeightMeaning('total')}
+                                            style={{ flex: 1 }}
+                                        >
+                                            Total
+                                        </button>
+                                        <button
+                                            className={`btn ${weightMeaning === 'per-side' ? '' : 'btn-secondary'}`}
+                                            onClick={() => setWeightMeaning('per-side')}
+                                            style={{ flex: 1 }}
+                                        >
+                                            Per Side
+                                        </button>
+                                        <button
+                                            className={`btn ${weightMeaning === 'barbell' ? '' : 'btn-secondary'}`}
+                                            onClick={() => setWeightMeaning('barbell')}
+                                            style={{ flex: 1 }}
+                                        >
+                                            Barbell
+                                        </button>
+                                    </div>
+                                    <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
+                                        {weightMeaning === 'total' ? 'Machine / cable — log total weight' : weightMeaning === 'per-side' ? 'Dumbbells — log weight per hand, shown as "×2"' : 'Barbell — plates auto-include 45lb bar weight'}
+                                    </div>
+                                </div>
+                            )}
+
                             <button
                                 className="btn"
                                 onClick={handleSave}
@@ -1692,15 +1924,19 @@
             );
         };
 
-        const WeightPickerModal = ({ exercise, onSelectWeight, selectedDate, previousWeight, setNumber }) => {
-            const [weight, setWeight] = useState(previousWeight || 45);
-            const [weightType, setWeightType] = useState('lbs');
+        const WeightPickerModal = ({ exercise, onSelectWeight, selectedDate, previousWeight, setNumber, unit = 'lbs' }) => {
+            const [weight, setWeight] = useState(previousWeight || (unit === 'kg' ? 20 : 45));
+            const [weightType, setWeightType] = useState(unit);
             const [showBandedColors, setShowBandedColors] = useState(false);
             const [selectedBandColor, setSelectedBandColor] = useState(null);
             const [bandedCustomName, setBandedCustomName] = useState('');
             const [yourWeights, setYourWeights] = useState([]);
+            const [exerciseWeightMeaning, setExerciseWeightMeaning] = useState('total');
 
-            const commonWeights = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130, 135, 140, 145, 150, 155, 160, 165, 170, 175, 180, 185, 190, 195, 200, 205, 210, 215, 220, 225];
+            const commonWeightsLbs = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130, 135, 140, 145, 150, 155, 160, 165, 170, 175, 180, 185, 190, 195, 200, 205, 210, 215, 220, 225];
+            const commonWeightsKg = [2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 27.5, 30, 32.5, 35, 37.5, 40, 42.5, 45, 47.5, 50, 52.5, 55, 57.5, 60, 62.5, 65, 67.5, 70, 72.5, 75, 77.5, 80, 82.5, 85, 87.5, 90, 92.5, 95, 97.5, 100];
+            const commonWeights = unit === 'kg' ? commonWeightsKg : commonWeightsLbs;
+            const stepperAmount = unit === 'kg' ? 2.5 : 5;
 
             useEffect(() => {
                 const loadWeights = async () => {
@@ -1718,6 +1954,14 @@
                 loadWeights();
             }, [exercise]);
 
+            useEffect(() => {
+                const loadMeaning = async () => {
+                    const fullEx = await dbOps.exercises.get(exercise.id);
+                    setExerciseWeightMeaning(fullEx?.weightMeaning || 'total');
+                };
+                loadMeaning();
+            }, [exercise]);
+
             return (
                 <div className="modal-overlay" onClick={() => onSelectWeight(null)}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -1726,71 +1970,122 @@
                             <button className="close-btn" onClick={() => onSelectWeight(null)}>✕</button>
                         </div>
                         <div className="modal-content">
-                            {yourWeights.length > 0 && (
-                                <div className="your-weights-container">
-                                    <div className="section-title">Your Weights</div>
-                                    <div className="your-weights-row">
-                                        {yourWeights.map(w => (
-                                            <button
-                                                key={w}
-                                                className="your-weights-btn"
-                                                onClick={() => onSelectWeight({ weight: w, weightType: 'lbs' })}
-                                            >
-                                                {w}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="form-group">
-                                <label className="form-label">Manual Entry</label>
-                                <div className="stepper-container">
+                            {/* CHANGE 3: Row 1: Stepper + Use button in single 50/50 row */}
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', height: '52px' }}>
+                                {/* Left half (50%): Stepper row */}
+                                <div style={{ display: 'flex', gap: '6px', flex: '1' }}>
                                     <button
-                                        className="stepper-btn"
-                                        onClick={() => setWeight(Math.max(0, weight - 5))}
+                                        onClick={() => setWeight(Math.max(0, parseFloat((weight - stepperAmount).toFixed(1))))}
+                                        style={{
+                                            padding: '12px 16px',
+                                            backgroundColor: 'rgba(139,58,98,0.15)',
+                                            border: '1px solid rgba(139,58,98,0.3)',
+                                            color: '#c77da0',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            flex: '0 0 auto',
+                                            height: '52px'
+                                        }}
                                     >
-                                        −5
+                                        {`−${stepperAmount}`}
                                     </button>
                                     <input
                                         type="number"
-                                        className="stepper-input"
                                         value={weight}
-                                        onChange={(e) => setWeight(parseInt(e.target.value) || 0)}
+                                        onChange={(e) => setWeight(parseFloat(e.target.value) || 0)}
+                                        style={{
+                                            flex: '1',
+                                            backgroundColor: 'rgba(255,255,255,0.04)',
+                                            border: '1px solid rgba(139,58,98,0.3)',
+                                            color: '#e0e0e0',
+                                            textAlign: 'center',
+                                            fontSize: '18px',
+                                            fontWeight: '700',
+                                            borderRadius: '8px',
+                                            WebkitAppearance: 'none',
+                                            MozAppearance: 'textfield'
+                                        }}
                                     />
                                     <button
-                                        className="stepper-btn"
-                                        onClick={() => setWeight(weight + 5)}
+                                        onClick={() => setWeight(parseFloat((weight + stepperAmount).toFixed(1)))}
+                                        style={{
+                                            padding: '12px 16px',
+                                            backgroundColor: 'rgba(139,58,98,0.15)',
+                                            border: '1px solid rgba(139,58,98,0.3)',
+                                            color: '#c77da0',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            flex: '0 0 auto',
+                                            height: '52px'
+                                        }}
                                     >
-                                        +5
+                                        {`+${stepperAmount}`}
                                     </button>
                                 </div>
+
+                                {/* Right half (50%): Use button */}
                                 <button
-                                    className="btn"
-                                    onClick={() => onSelectWeight({ weight: weight, weightType: 'lbs' })}
-                                    style={{ marginTop: '4px' }}
+                                    onClick={() => onSelectWeight({ weight: weight, weightType: unit })}
+                                    style={{
+                                        flex: '1',
+                                        padding: '14px',
+                                        backgroundColor: '#8b3a62',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        fontSize: '15px',
+                                        fontWeight: '600',
+                                        height: '52px'
+                                    }}
                                 >
-                                    Use {weight} lbs →
+                                    {`Use ${weight} ${unit === 'kg' ? 'kg' : 'lbs'} →`}
                                 </button>
                             </div>
 
-                            <div className="button-row">
+                            {/* Row 3: Body Weight + Band Assisted */}
+                            <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
                                 <button
-                                    className={`btn ${weightType === 'bodyweight' ? '' : 'btn-secondary'}`}
-                                    onClick={() => { onSelectWeight({ weight: null, weightType: 'bodyweight' }); }}
+                                    onClick={() => onSelectWeight({ weight: null, weightType: 'bodyweight' })}
+                                    style={{
+                                        flex: '1',
+                                        padding: '12px',
+                                        backgroundColor: 'rgba(139,58,98,0.1)',
+                                        border: '1px solid rgba(139,58,98,0.3)',
+                                        color: '#c77da0',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        fontSize: '14px',
+                                        fontWeight: '600'
+                                    }}
                                 >
-                                    BW
+                                    Body Weight
                                 </button>
                                 <button
-                                    className={`btn ${weightType === 'banded' ? '' : 'btn-secondary'}`}
-                                    onClick={() => { setWeightType('banded'); setShowBandedColors(!showBandedColors); }}
+                                    onClick={() => setShowBandedColors(!showBandedColors)}
+                                    style={{
+                                        flex: '1',
+                                        padding: '12px',
+                                        backgroundColor: 'rgba(139,58,98,0.1)',
+                                        border: '1px solid rgba(139,58,98,0.3)',
+                                        color: '#c77da0',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        fontSize: '14px',
+                                        fontWeight: '600'
+                                    }}
                                 >
-                                    Banded
+                                    Band Assisted
                                 </button>
                             </div>
 
+                            {/* Band color picker - shown when toggled */}
                             {showBandedColors && (
-                                <div className="exercise-picker-section">
+                                <div style={{ marginBottom: '12px' }}>
                                     <div className="banded-colors-grid">
                                         <button className="banded-color-btn banded-red" onClick={() => { setSelectedBandColor('Red'); }}>Red</button>
                                         <button className="banded-color-btn banded-black" onClick={() => { setSelectedBandColor('Black'); }}>Black</button>
@@ -1841,14 +2136,50 @@
                                 </div>
                             )}
 
-                            <div className="exercise-picker-section">
+                            {/* CHANGE 4: Row 4: Plates - ALL 6 IN ONE ROW */}
+                            <div style={{ display: 'flex', gap: '4px', marginBottom: '12px' }}>
+                                {[1, 2, 4, 6, 8, 10].map(totalPlates => {
+                                    const plateWeight = unit === 'kg' ? 20 : 45;
+                                    const barWeight = exerciseWeightMeaning === 'barbell' ? plateWeight : 0;
+                                    const total = barWeight + (totalPlates * plateWeight);
+                                    const pluralSuffix = totalPlates === 1 ? '' : 's';
+                                    return (
+                                        <button
+                                            key={totalPlates}
+                                            onClick={() => onSelectWeight({ weight: total, weightType: unit })}
+                                            style={{
+                                                flex: '1',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                padding: '6px 2px',
+                                                backgroundColor: 'rgba(139,58,98,0.1)',
+                                                border: '1px solid rgba(139,58,98,0.3)',
+                                                color: '#c77da0',
+                                                borderRadius: '6px',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <span style={{ fontSize: '11px', fontWeight: 'bold' }}>{totalPlates} plate{pluralSuffix}</span>
+                                            <span style={{ fontSize: '9px' }}>{total}{unit === 'kg' ? 'kg' : 'lbs'}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Separator line */}
+                            <div style={{ height: '1px', backgroundColor: 'rgba(139,58,98,0.2)', margin: '10px 0' }} />
+
+                            {/* Common weights grid */}
+                            <div style={{ marginBottom: '12px' }}>
                                 <div className="section-title">Common Weights</div>
                                 <div className="weight-grid">
                                     {commonWeights.map(w => (
                                         <button
                                             key={w}
                                             className="weight-btn"
-                                            onClick={() => onSelectWeight({ weight: w, weightType: 'lbs' })}
+                                            onClick={() => onSelectWeight({ weight: w, weightType: unit })}
                                         >
                                             {w}
                                         </button>
@@ -1861,10 +2192,11 @@
             );
         };
 
-        const RepPickerModal = ({ exercise, weight, weightType, onSelectReps, setNumber }) => {
+        const RepPickerModal = ({ exercise, weight, weightType, bandedColor, onSelectReps, setNumber }) => {
             const reps = Array.from({ length: 20 }, (_, i) => i + 1);
+            const [customReps, setCustomReps] = useState('');
 
-            const displayWeight = weightType === 'bodyweight' ? 'BW' : weightType === 'banded' ? 'Banded' : `${weight} ${weightType}`;
+            const displayWeight = weightType === 'bodyweight' ? 'BW' : weightType === 'banded' ? (bandedColor || 'Banded') : `${weight} ${weightType}`;
 
             return (
                 <div className="modal-overlay" onClick={() => onSelectReps(null)}>
@@ -1876,6 +2208,7 @@
                                     Weight: {displayWeight}
                                 </div>
                             </div>
+                            <button className="close-btn" onClick={() => onSelectReps(null)}>✕</button>
                         </div>
                         <div className="modal-content">
                             <div className="rep-grid">
@@ -1889,13 +2222,51 @@
                                     </button>
                                 ))}
                             </div>
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                                <input
+                                    type="number"
+                                    value={customReps}
+                                    onChange={(e) => setCustomReps(e.target.value)}
+                                    placeholder="Custom reps"
+                                    style={{
+                                        flex: 1,
+                                        background: 'rgba(255,255,255,0.04)',
+                                        border: '1px solid rgba(139,58,98,0.3)',
+                                        color: '#e0e0e0',
+                                        borderRadius: '8px',
+                                        padding: '10px',
+                                        fontSize: '16px',
+                                        textAlign: 'center'
+                                    }}
+                                />
+                                <button
+                                    onClick={() => {
+                                        const repsNum = parseInt(customReps);
+                                        if (!isNaN(repsNum) && repsNum > 0) {
+                                            onSelectReps(repsNum);
+                                        }
+                                    }}
+                                    style={{
+                                        background: '#8b3a62',
+                                        color: '#fff',
+                                        border: 'none',
+                                        padding: '10px 16px',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        fontSize: '13px',
+                                        fontWeight: '600'
+                                    }}
+                                >
+                                    Use typed reps
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             );
         };
 
-        const TimedDurationModal = ({ exercise, weight, weightType, onSelectDuration, setNumber }) => {
+        const TimedDurationModal = ({ exercise, weight, weightType, bandedColor, onSelectDuration, setNumber }) => {
             const [time, setTime] = useState(0);
             const [isRunning, setIsRunning] = useState(false);
             const intervalRef = useRef(null);
@@ -1924,7 +2295,7 @@
                 return `${mins}:${String(secs).padStart(2, '0')}`;
             };
 
-            const displayWeight = weightType === 'bodyweight' ? 'BW' : weightType === 'banded' ? 'Banded' : `${weight} ${weightType}`;
+            const displayWeight = weightType === 'bodyweight' ? 'BW' : weightType === 'banded' ? (bandedColor || 'Banded') : `${weight} ${weightType}`;
 
             const quickDurations = [30, 60, 90, 120, 150, 180, 240, 300];
 
@@ -1991,23 +2362,34 @@
         
 
         const SessionNoteModal = ({ exercise, date, onSave, onCancel }) => {
-            const [tags, setTags] = useState([]);
+            const [mood, setMood] = useState(null);
             const [freeText, setFreeText] = useState('');
             const [formCueText, setFormCueText] = useState('');
-            
+
             const [loading, setLoading] = useState(true);
 
-            const presetTags = {
-                'Energy': ['Low Energy', 'Felt Strong', 'Fatigued', 'Feeling Sick', 'Sore Going In'],
-                'Performance': ['Went to Failure', 'Couldn\'t Hit Normal Weight', 'Couldn\'t Hit Normal Volume', 'New PR', 'Deload'],
-                'Form': ['Felt Off', 'Good Mind-Muscle'],
+            const moodLevels = [
+                { value: 1, label: 'Rough', description: 'Had to quit or struggled badly' },
+                { value: 2, label: 'Below Par', description: 'Noticeably off today' },
+                { value: 3, label: 'Neutral', description: 'No strong feeling either way' },
+                { value: 4, label: 'Good', description: 'Solid session' },
+                { value: 5, label: 'Crushed It', description: 'Peak performance' },
+            ];
+
+            const getMoodColor = (value) => {
+                if (!value) return 'rgba(255, 255, 255, 0.1)';
+                const hues = [0, 20, 60, 120, 140]; // red, orange, yellow, green, bright green
+                const saturations = [70, 65, 50, 65, 70];
+                const lightnesses = [35, 40, 45, 50, 45];
+                const idx = value - 1;
+                return `hsl(${hues[idx]}, ${saturations[idx]}%, ${lightnesses[idx]}%)`;
             };
 
             useEffect(() => {
                 const load = async () => {
                     const existing = await dbOps.sessionNotes.getByExerciseAndDate(exercise.id, date);
                     if (existing) {
-                        setTags(existing.tags || []);
+                        setMood(existing.mood || null);
                         setFreeText(existing.freeText || '');
                         setFormCueText(existing.formCueText || '');
                     }
@@ -2016,16 +2398,12 @@
                 load();
             }, [exercise, date]);
 
-            const toggleTag = (tag) => {
-                setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
-            };
-
             const handleSave = async () => {
                 const note = {
                     id: `sn_${exercise.id}_${date}`,
                     exerciseId: exercise.id,
                     date: date,
-                    tags,
+                    mood,
                     freeText,
                     formCueText,
                     updatedAt: new Date().toISOString(),
@@ -2048,32 +2426,57 @@
                                 {exercise.name} — {formatDateShort(date)}
                             </div>
 
-                            {Object.entries(presetTags).map(([category, categoryTags]) => (
-                                <div key={category} style={{ marginBottom: '16px' }}>
-                                    <div className="section-title">{category}</div>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                                        {categoryTags.map(tag => (
-                                            <button
-                                                key={tag}
-                                                onClick={() => toggleTag(tag)}
+                            <div style={{ marginBottom: '24px' }}>
+                                <div className="section-title">Mood</div>
+                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                    {moodLevels.map(ml => (
+                                        <button
+                                            key={ml.value}
+                                            onClick={() => setMood(mood === ml.value ? null : ml.value)}
+                                            style={{
+                                                flex: 1,
+                                                padding: '0',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                                cursor: 'pointer',
+                                                background: 'none',
+                                                border: mood === ml.value ? '2px solid #8b3a62' : '1px solid rgba(255,255,255,0.1)',
+                                                borderRadius: '8px',
+                                                padding: '8px 4px',
+                                                WebkitAppearance: 'none',
+                                            }}
+                                        >
+                                            <div
                                                 style={{
-                                                    padding: '6px 12px',
-                                                    borderRadius: '16px',
-                                                    border: tags.includes(tag) ? '1px solid rgba(139, 58, 98, 0.5)' : '1px solid #333',
-                                                    background: tags.includes(tag) ? 'rgba(139, 58, 98, 0.3)' : 'rgba(255, 255, 255, 0.05)',
-                                                    color: tags.includes(tag) ? '#7b93f5' : '#999',
-                                                    fontSize: '12px',
-                                                    fontWeight: '500',
-                                                    cursor: 'pointer',
-                                                    WebkitAppearance: 'none',
+                                                    width: '44px',
+                                                    height: '44px',
+                                                    borderRadius: '50%',
+                                                    background: getMoodColor(ml.value),
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontSize: '18px',
+                                                    fontWeight: 'bold',
+                                                    color: '#fff',
+                                                    border: mood === ml.value ? '2px solid #8b3a62' : 'none',
                                                 }}
                                             >
-                                                {tag}
-                                            </button>
-                                        ))}
-                                    </div>
+                                                {ml.value}
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: mood === ml.value ? '#e0e0e0' : '#999', fontWeight: mood === ml.value ? '600' : '400' }}>
+                                                {ml.label}
+                                            </div>
+                                        </button>
+                                    ))}
                                 </div>
-                            ))}
+                                {mood && (
+                                    <div style={{ fontSize: '12px', color: '#999', textAlign: 'center', marginTop: '8px' }}>
+                                        {moodLevels.find(m => m.value === mood)?.description}
+                                    </div>
+                                )}
+                            </div>
 
                             <div style={{ marginBottom: '16px' }}>
                                 <div className="section-title">Form Cue</div>
@@ -2106,7 +2509,7 @@
             );
         };
 
-        const HistoryModal = ({ exercise, onClose, onLogSet }) => {
+        const HistoryModal = ({ exercise, onClose, onLogSet, unit, onUniformWeight, onUniformReps, onBoth }) => {
             const [history, setHistory] = useState([]);
             const [sessionNotes, setSessionNotes] = useState({});
 
@@ -2141,9 +2544,20 @@
                         </div>
                         <div className="modal-content">
                             {onLogSet && (
-                                <button className="btn" onClick={onLogSet} style={{ marginBottom: '16px' }}>
-                                    Log a Set →
-                                </button>
+                                <div style={{ display: 'flex', gap: '4px', marginBottom: '16px', width: '100%' }}>
+                                    <button className="btn" onClick={onLogSet} style={{ flex: 1, fontSize: '12px', padding: '10px 4px', fontWeight: '600' }}>
+                                        Log a Set
+                                    </button>
+                                    <button className="btn btn-secondary" onClick={onUniformWeight} style={{ flex: 1, fontSize: '12px', padding: '10px 4px', fontWeight: '600' }}>
+                                        Uniform Weight
+                                    </button>
+                                    <button className="btn btn-secondary" onClick={onUniformReps} style={{ flex: 1, fontSize: '12px', padding: '10px 4px', fontWeight: '600' }}>
+                                        Uniform Reps
+                                    </button>
+                                    <button className="btn btn-secondary" onClick={onBoth} style={{ flex: 1, fontSize: '12px', padding: '10px 4px', fontWeight: '600' }}>
+                                        Both
+                                    </button>
+                                </div>
                             )}
                             {exercise.note && (
                                 <div style={{ marginBottom: '12px', padding: '8px 12px', background: 'rgba(139, 58, 98, 0.08)', borderRadius: '8px', fontSize: '13px', color: '#c77da0' }}>
@@ -2167,19 +2581,28 @@
                                                         className="set-box"
                                                         style={{ backgroundColor: getSetBoxColor(sidx) }}
                                                     >
-                                                        {formatSetBox(s, session.sets[sidx - 1])}
+                                                        {formatSetBox(s, session.sets[sidx - 1], unit)}
                                                     </div>
                                                 ))}
                                             </div>
                                             {note && (
                                                 <div style={{ marginTop: '8px' }}>
-                                                    {note.tags && note.tags.length > 0 && (
-                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '6px' }}>
-                                                            {note.tags.map(tag => (
-                                                                <span key={tag} style={{ padding: '2px 8px', borderRadius: '12px', background: 'rgba(139, 58, 98, 0.2)', color: '#7b93f5', fontSize: '11px' }}>
-                                                                    {tag}
-                                                                </span>
-                                                            ))}
+                                                    {(note.mood || note.tags) && (
+                                                        <div style={{ marginBottom: '6px' }}>
+                                                            {note.mood && (
+                                                                <div style={{ fontSize: '12px', color: '#c77da0' }}>
+                                                                    {['', 'Rough', 'Below Par', 'Neutral', 'Good', 'Crushed It'][note.mood]}
+                                                                </div>
+                                                            )}
+                                                            {!note.mood && note.tags && note.tags.length > 0 && (
+                                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                                    {note.tags.map(tag => (
+                                                                        <span key={tag} style={{ padding: '2px 8px', borderRadius: '12px', background: 'rgba(139, 58, 98, 0.2)', color: '#7b93f5', fontSize: '11px' }}>
+                                                                            {tag}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                     {note.formCueText && <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}><strong>Form:</strong> {note.formCueText}</div>}
@@ -2196,7 +2619,7 @@
             );
         };
 
-        const SettingsModal = ({ onClose, onCategoriesChanged, categories: settingsCategories }) => {
+        const SettingsModal = ({ onClose, onCategoriesChanged, categories: settingsCategories, unit, setUnit }) => {
             const [activeTab, setActiveTab] = useState('weekly');
             const [weeklyLabels, setWeeklyLabels] = useState({
                 0: '', 1: '', 2: '', 3: '', 4: '', 5: '', 6: ''
@@ -2204,6 +2627,7 @@
             const [resetConfirmStep, setResetConfirmStep] = useState(null);
             const [resetConfirmText, setResetConfirmText] = useState('');
             const [showCatEditor, setShowCatEditor] = useState(false);
+            const [editingDayIdx, setEditingDayIdx] = useState(null);
 
             const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
             const templateOptions = ['', ...(settingsCategories || ['push', 'pull', 'legs', 'core', 'cardio']).map(c => c.charAt(0).toUpperCase() + c.slice(1)), 'Rest'];
@@ -2293,12 +2717,20 @@
                     req.onsuccess = () => { allDayNotes.push(...req.result); resolve(); };
                 });
                 let daySplitLines = '';
-                allDayNotes.filter(dn => dn.date.startsWith('__split_')).forEach(dn => {
-                    const splitDate = dn.date.replace('__split_', '');
-                    daySplitLines += `__DAYSPLIT__,${splitDate},${dn.note},,,,,,, \n`;
+                let unitLine = '';
+                let bwLine = '';
+                allDayNotes.forEach(dn => {
+                    if (dn.date.startsWith('__split_')) {
+                        const splitDate = dn.date.replace('__split_', '');
+                        daySplitLines += `__DAYSPLIT__,${splitDate},${dn.note},,,,,,, \n`;
+                    } else if (dn.date === '__unit__') {
+                        unitLine = `__UNIT__,${dn.note},,,,,,,, \n`;
+                    } else if (dn.date === '__bodyweight__') {
+                        bwLine = `__BODYWEIGHT__,${dn.note},,,,,,,, \n`;
+                    }
                 });
 
-                let csv = 'Date,Exercise,Category,Type,Set,Weight,WeightType,Reps,Duration,Note\n' + splitLine + '\n' + daySplitLines;
+                let csv = 'Date,Exercise,Category,Type,Set,Weight,WeightType,Reps,Duration,Note\n' + unitLine + bwLine + splitLine + '\n' + daySplitLines;
                 allSets.sort((a, b) => a.date.localeCompare(b.date) || a.exerciseOrder - b.exerciseOrder || a.setOrder - b.setOrder)
                     .forEach(set => {
                         const ex = allExercises.find(e => e.id === set.exerciseId) || {};
@@ -2313,7 +2745,7 @@
                                 const sn = noteMap[`${set.exerciseId}_${set.date}`];
                                 if (sn) {
                                     const parts = [];
-                                    if (sn.tags) sn.tags.forEach(t => parts.push(t));
+                                    if (sn.mood) parts.push(`Mood:${sn.mood}`);
                                     if (sn.formCueText) parts.push(`Form:${sn.formCueText}`);
                                     if (sn.freeText) parts.push(`General:${sn.freeText}`);
                                     if (parts.length > 0) noteStr += '|' + parts.join('|');
@@ -2324,7 +2756,7 @@
                             const sn = noteMap[`${set.exerciseId}_${set.date}`];
                             if (sn) {
                                 const parts = [];
-                                if (sn.tags) sn.tags.forEach(t => parts.push(t));
+                                if (sn.mood) parts.push(`Mood:${sn.mood}`);
                                 if (sn.formCueText) parts.push(`Form:${sn.formCueText}`);
                                 if (sn.freeText) parts.push(`General:${sn.freeText}`);
                                 noteStr = parts.join('|');
@@ -2392,11 +2824,21 @@
                     const text = await file.text();
                     const allLines = text.split('\n').slice(1).filter(l => l.trim());
 
-                    // Check for __SPLITS__ metadata row and extract weekly splits
+                    // Check for metadata rows and extract data
                     let importedSplits = null;
                     const importedDaySplits = [];
+                    let importedUnit = 'lbs';
+                    let importedBodyweight = null;
                     const lines = allLines.filter(l => {
                         const parts = parseCSVLine(l);
+                        if (parts[0] === '__UNIT__') {
+                            importedUnit = parts[1] || 'lbs';
+                            return false;
+                        }
+                        if (parts[0] === '__BODYWEIGHT__') {
+                            importedBodyweight = parts[1] || null;
+                            return false;
+                        }
                         if (parts[0] === '__SPLITS__') {
                             importedSplits = { 0: parts[1]||'', 1: parts[2]||'', 2: parts[3]||'', 3: parts[4]||'', 4: parts[5]||'', 5: parts[6]||'', 6: parts[7]||'' };
                             return false;
@@ -2536,28 +2978,45 @@
                     // PHASE 5: Write session notes
                     setImportStatus('Writing session notes...');
                     const sessionNotesToWrite = [];
+
+                    // Helper function to map old tags to mood 1-5
+                    const mapTagToMood = (tag) => {
+                        const lowTag = tag.toLowerCase();
+                        if (['felt weak', 'low energy', 'feeling sick'].some(t => lowTag.includes(t))) return 2;
+                        if (['felt normal', 'fatigued'].some(t => lowTag.includes(t))) return 3;
+                        if (['felt strong', 'high energy', 'good pump'].some(t => lowTag.includes(t))) return 4;
+                        return null;
+                    };
+
                     for (const row of parsedRows) {
                         if (row.note && row.setOrder === 1) {
                             const exercise = exerciseMap.get(row.exerciseName);
                             const noteParts = row.note.split('|').map(p => p.trim());
+                            let mood = null;
                             const tags = [];
                             let formCueText = '';
                             let freeText = '';
                             noteParts.forEach(p => {
-                                if (p.startsWith('Form:')) {
+                                if (p.startsWith('Mood:')) {
+                                    mood = parseInt(p.substring(5).trim());
+                                } else if (p.startsWith('Form:')) {
                                     formCueText = p.substring(5).trim();
                                 } else if (p.startsWith('General:')) {
                                     freeText = p.substring(8).trim();
                                 } else if (p) {
-                                    tags.push(p);
+                                    // Old-style tag - try to map it
+                                    const mappedMood = mapTagToMood(p);
+                                    if (mappedMood && !mood) mood = mappedMood;
+                                    tags.push(p); // Keep for backward compatibility
                                 }
                             });
-                            if (tags.length > 0 || formCueText || freeText) {
+                            if (mood || tags.length > 0 || formCueText || freeText) {
                                 sessionNotesToWrite.push({
                                     id: `sn_${exercise.id}_${row.date}`,
                                     exerciseId: exercise.id,
                                     date: row.date,
-                                    tags,
+                                    mood,
+                                    tags: tags.length > 0 ? tags : undefined,
                                     freeText,
                                     formCueText,
                                     updatedAt: new Date().toISOString(),
@@ -2578,7 +3037,15 @@
                         });
                     }
 
-                    // PHASE 6: Write weekly splits if present
+                    // PHASE 6: Write metadata
+                    if (importedUnit) {
+                        await dbOps.dayNotes.set('__unit__', importedUnit);
+                    }
+                    if (importedBodyweight) {
+                        await dbOps.dayNotes.set('__bodyweight__', importedBodyweight);
+                    }
+
+                    // PHASE 7: Write weekly splits if present
                     if (importedSplits) {
                         for (let i = 0; i < 7; i++) {
                             await dbOps.templates.set(i, importedSplits[i] || '');
@@ -2648,23 +3115,49 @@
 
                             {activeTab === 'weekly' && (
                                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                                    <div style={{ flex: 1 }}>
+                                    <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #333' }}>
+                                        <div className="section-title">Units</div>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <button
+                                                onClick={async () => {
+                                                    setUnit('lbs');
+                                                    await dbOps.dayNotes.set('__unit__', 'lbs');
+                                                }}
+                                                style={{
+                                                    flex: 1, padding: '10px', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', WebkitAppearance: 'none',
+                                                    background: unit === 'lbs' ? '#8b3a62' : 'rgba(255,255,255,0.05)',
+                                                    color: unit === 'lbs' ? '#fff' : '#999',
+                                                }}
+                                            >
+                                                lbs
+                                            </button>
+                                            <button
+                                                onClick={async () => {
+                                                    setUnit('kg');
+                                                    await dbOps.dayNotes.set('__unit__', 'kg');
+                                                }}
+                                                style={{
+                                                    flex: 1, padding: '10px', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', WebkitAppearance: 'none',
+                                                    background: unit === 'kg' ? '#8b3a62' : 'rgba(255,255,255,0.05)',
+                                                    color: unit === 'kg' ? '#fff' : '#999',
+                                                }}
+                                            >
+                                                kg
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div style={{ flex: 1, overflow: 'auto' }}>
                                         {dayNames.map((day, idx) => (
                                             <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                                                 <label style={{ fontSize: '13px', fontWeight: '600', color: '#c77da0', textTransform: 'uppercase', letterSpacing: '0.5px', width: '36px', flexShrink: 0 }}>
                                                     {day.substring(0, 3)}
                                                 </label>
-                                                <select
-                                                    className="form-select"
-                                                    value={weeklyLabels[idx]}
-                                                    onChange={(e) => handleSelectChange(idx, e.target.value)}
-                                                    style={{ flex: 1, margin: 0, padding: '10px 12px' }}
+                                                <button
+                                                    onClick={() => setEditingDayIdx(idx)}
+                                                    style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #333', background: 'rgba(255,255,255,0.05)', color: '#e0e0e0', fontSize: '14px', fontWeight: '500', textAlign: 'left', cursor: 'pointer', WebkitAppearance: 'none' }}
                                                 >
-                                                    {templateOptions.map(opt => (
-                                                        <option key={opt} value={opt}>{opt || 'None'}</option>
-                                                    ))}
-                                                    <option value="__add_new__">+ Add New Split...</option>
-                                                </select>
+                                                    {weeklyLabels[idx] || 'None'}
+                                                </button>
                                             </div>
                                         ))}
                                     </div>
@@ -2679,6 +3172,43 @@
                                             }}
                                             onCancel={() => setShowCatEditor(false)}
                                         />
+                                    )}
+                                    {editingDayIdx !== null && (
+                                        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                             onClick={() => setEditingDayIdx(null)}>
+                                            <div style={{ background: '#1e0e14', borderRadius: '16px', padding: '16px', width: '85%', maxWidth: '340px', maxHeight: '85vh', overflow: 'auto' }}
+                                                 onClick={(e) => e.stopPropagation()}>
+                                                <div style={{ fontSize: '16px', fontWeight: '700', color: '#e0e0e0', marginBottom: '12px', textAlign: 'center' }}>
+                                                    {dayNames[editingDayIdx]}
+                                                </div>
+                                                <button
+                                                    onClick={() => { setShowCatEditor(true); setEditingDayIdx(null); }}
+                                                    style={{
+                                                        width: '100%', padding: '14px', marginBottom: '12px',
+                                                        borderRadius: '8px', border: '1px dashed rgba(139,58,98,0.4)',
+                                                        background: 'none', color: '#8b3a62', fontSize: '16px', fontWeight: '600',
+                                                        cursor: 'pointer', WebkitAppearance: 'none', textAlign: 'center',
+                                                    }}
+                                                >
+                                                    Create New Split Category
+                                                </button>
+                                                {templateOptions.map(opt => (
+                                                    <button
+                                                        key={opt}
+                                                        onClick={() => { handleSelectChange(editingDayIdx, opt); setEditingDayIdx(null); }}
+                                                        style={{
+                                                            width: '100%', padding: '14px', marginBottom: '4px',
+                                                            borderRadius: '8px', border: 'none', fontSize: '16px', fontWeight: '500',
+                                                            background: weeklyLabels[editingDayIdx] === opt ? '#8b3a62' : 'rgba(255,255,255,0.05)',
+                                                            color: weeklyLabels[editingDayIdx] === opt ? '#fff' : '#e0e0e0',
+                                                            cursor: 'pointer', WebkitAppearance: 'none', textAlign: 'center',
+                                                        }}
+                                                    >
+                                                        {opt || 'None'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
                             )}
@@ -2696,8 +3226,7 @@
                                             </div>
                                         )}
                                     </div>
-                                    <div style={{ flex: 1 }}></div>
-                                    <div style={{ borderTop: '1px solid #333', paddingTop: '16px', textAlign: 'center' }}>
+                                    <div style={{ borderTop: '1px solid #333', paddingTop: '16px', textAlign: 'center', marginTop: '24px' }}>
                                         <h3 style={{ color: '#ff6b6b', marginBottom: '8px', fontSize: '14px' }}>Reset All Data</h3>
                                         <p style={{ color: '#666', marginBottom: '12px', lineHeight: '1.5', fontSize: '12px' }}>
                                             Permanently delete all activities, sets, notes, templates, and session notes. This cannot be undone.
@@ -2802,14 +3331,24 @@
             await dbOps.dayNotes.set('__categories__', JSON.stringify(cats));
         };
 
-        const DayDetailModal = ({ date, onClose, dayLabel, categories, onSplitChange }) => {
+        const DayDetailModal = ({ date, onClose, dayLabel, categories, onSplitChange, unit }) => {
             const [activeTab, setActiveTab] = useState(dayLabel ? 'activities' : 'split');
             const [activities, setActivities] = useState([]);
             const [currentIdx, setCurrentIdx] = useState(0);
             const [sessionNotes, setSessionNotes] = useState({});
             const [allHistory, setAllHistory] = useState({});
+            const [pullDownY, setPullDownY] = useState(0);
+            const [templateSplit, setTemplateSplit] = useState('');
             const detailTouchRef = useRef(null);
             const detailContentRef = useRef(null);
+            const pullDownRef = useRef(null);
+            const modalRef = useRef(null);
+
+            useEffect(() => {
+                const d = parseLocalDate(date);
+                const dow = d.getDay();
+                dbOps.templates.get(dow).then(t => setTemplateSplit(t?.label || ''));
+            }, [date]);
 
             useEffect(() => {
                 if (!dayLabel) return;
@@ -2844,13 +3383,30 @@
 
             const handleDetailTouchStart = (e) => {
                 if (activeTab !== 'activities') return;
-                detailTouchRef.current = { startX: e.touches[0].clientX, startTime: Date.now() };
+                detailTouchRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, startTime: Date.now(), axis: null };
+            };
+            const handleDetailTouchMove = (e) => {
+                if (!detailTouchRef.current || activeTab !== 'activities') return;
+                const dx = e.touches[0].clientX - detailTouchRef.current.startX;
+                const dy = e.touches[0].clientY - detailTouchRef.current.startY;
+                if (detailTouchRef.current.axis === null) {
+                    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+                        if (Math.abs(dx) > Math.abs(dy)) {
+                            detailTouchRef.current.axis = 'horizontal';
+                            e.preventDefault();
+                        } else {
+                            detailTouchRef.current.axis = 'vertical';
+                        }
+                    }
+                }
             };
             const handleDetailTouchEnd = (e) => {
                 if (!detailTouchRef.current || activeTab !== 'activities') return;
                 const dx = e.changedTouches[0].clientX - detailTouchRef.current.startX;
                 const dt = Date.now() - detailTouchRef.current.startTime;
+                const axis = detailTouchRef.current.axis;
                 detailTouchRef.current = null;
+                if (axis === 'vertical') return;
                 if (Math.abs(dx) > 60 && dt < 400) {
                     const el = detailContentRef.current;
                     const direction = dx > 0 ? 1 : -1;
@@ -2872,6 +3428,49 @@
                 }
             };
 
+            const handlePullDownTouchStart = (e) => {
+                const contentEl = detailContentRef.current;
+                if (contentEl && contentEl.scrollTop === 0) {
+                    pullDownRef.current = { startY: e.touches[0].clientY, startTime: Date.now() };
+                }
+            };
+
+            const handlePullDownTouchMove = (e) => {
+                if (!pullDownRef.current) return;
+                const dy = e.touches[0].clientY - pullDownRef.current.startY;
+                if (dy > 0) {
+                    setPullDownY(dy);
+                    const contentEl = detailContentRef.current;
+                    if (contentEl) {
+                        contentEl.style.transform = `translateY(${dy}px)`;
+                        contentEl.style.opacity = 1 - (dy / 200);
+                    }
+                }
+            };
+
+            const handlePullDownTouchEnd = (e) => {
+                if (!pullDownRef.current) return;
+                const dy = pullDownY;
+                pullDownRef.current = null;
+                const contentEl = detailContentRef.current;
+                if (dy > 120) {
+                    if (contentEl) {
+                        contentEl.style.transform = 'translateY(100vh)';
+                        contentEl.style.opacity = '0';
+                    }
+                    setTimeout(() => {
+                        onClose();
+                    }, 150);
+                } else {
+                    if (contentEl) {
+                        contentEl.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+                        contentEl.style.transform = 'translateY(0)';
+                        contentEl.style.opacity = '1';
+                    }
+                    setPullDownY(0);
+                }
+            };
+
             const handleSplitSelect = (split) => {
                 onSplitChange(split);
                 setActiveTab('activities');
@@ -2884,8 +3483,11 @@
 
             return (
                 <div className="modal-overlay" onClick={onClose}>
-                    <div className="modal" style={{ height: '100vh', maxHeight: '100vh', top: 0, bottom: 0 }} onClick={(e) => e.stopPropagation()} onTouchStart={handleDetailTouchStart} onTouchEnd={handleDetailTouchEnd}>
-                        <div className="modal-header">
+                    <div className="modal" ref={modalRef} style={{ height: '100vh', maxHeight: '100vh', top: 0, bottom: 0 }} onClick={(e) => e.stopPropagation()} onTouchStart={handleDetailTouchStart} onTouchMove={handleDetailTouchMove} onTouchEnd={handleDetailTouchEnd}>
+                        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '8px', paddingBottom: '4px' }}>
+                            <div style={{ width: '40px', height: '4px', borderRadius: '2px', background: '#555' }}></div>
+                        </div>
+                        <div className="modal-header" onTouchStart={handlePullDownTouchStart} onTouchMove={handlePullDownTouchMove} onTouchEnd={handlePullDownTouchEnd}>
                             <h2>{formatDateShort(date)}</h2>
                             <button className="close-btn" onClick={onClose}>✕</button>
                         </div>
@@ -2947,17 +3549,26 @@
                                                                 <div className="set-boxes-container">
                                                                     {session.sets.map((s, sidx) => (
                                                                         <div key={sidx} className="set-box" style={{ backgroundColor: getSetBoxColor(sidx) }}>
-                                                                            {formatSetBox(s, session.sets[sidx - 1])}
+                                                                            {formatSetBox(s, session.sets[sidx - 1], unit)}
                                                                         </div>
                                                                     ))}
                                                                 </div>
                                                                 {note && (
                                                                     <div style={{ marginTop: '8px' }}>
-                                                                        {note.tags && note.tags.length > 0 && (
-                                                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '6px' }}>
-                                                                                {note.tags.map(tag => (
-                                                                                    <span key={tag} style={{ padding: '2px 8px', borderRadius: '12px', background: 'rgba(139, 58, 98, 0.2)', color: '#7b93f5', fontSize: '11px' }}>{tag}</span>
-                                                                                ))}
+                                                                        {(note.mood || note.tags) && (
+                                                                            <div style={{ marginBottom: '6px' }}>
+                                                                                {note.mood && (
+                                                                                    <div style={{ fontSize: '12px', color: '#c77da0' }}>
+                                                                                        {['', 'Rough', 'Below Par', 'Neutral', 'Good', 'Crushed It'][note.mood]}
+                                                                                    </div>
+                                                                                )}
+                                                                                {!note.mood && note.tags && note.tags.length > 0 && (
+                                                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                                                        {note.tags.map(tag => (
+                                                                                            <span key={tag} style={{ padding: '2px 8px', borderRadius: '12px', background: 'rgba(139, 58, 98, 0.2)', color: '#7b93f5', fontSize: '11px' }}>{tag}</span>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                )}
                                                                             </div>
                                                                         )}
                                                                         {note.formCueText && <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}><strong>Form:</strong> {note.formCueText}</div>}
@@ -3003,6 +3614,15 @@
                                             Remove Split
                                         </button>
                                     )}
+                                    {templateSplit && templateSplit !== dayLabel && (
+                                        <button
+                                            className="btn btn-secondary"
+                                            onClick={() => { onSplitChange(templateSplit); }}
+                                            style={{ marginTop: '8px' }}
+                                        >
+                                            Restore to Weekly Template ({templateSplit})
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -3024,7 +3644,24 @@
             const [expandedExercise, setExpandedExercise] = useState(null);
             const [selectedSetForEdit, setSelectedSetForEdit] = useState(null);
             const [setNumber, setSetNumber] = useState(1);
+            const [prefilledReps, setPrefilledReps] = useState(null);
             const [categories, setCategories] = useState(['push', 'pull', 'legs', 'core', 'cardio', 'mobility', 'stretch', 'other']);
+            const [unit, setUnit] = useState('lbs');
+            const [bodyweight, setBodyweight] = useState(null);
+            const [showBWEditor, setShowBWEditor] = useState(false);
+            const [bwEditValue, setBWEditValue] = useState('');
+            const [weightBannerDismissed, setWeightBannerDismissed] = useState(false);
+            const [inlineMood, setInlineMood] = useState({});
+            const [inlineFormCue, setInlineFormCue] = useState({});
+            const [inlineNote, setInlineNote] = useState({});
+            const [showFormCueInput, setShowFormCueInput] = useState(null);
+            const [showNoteInput, setShowNoteInput] = useState(null);
+            const [showQuickNotes, setShowQuickNotes] = useState(null);
+            const [selectedQuickNotes, setSelectedQuickNotes] = useState({});
+            const [exerciseLocks, setExerciseLocks] = useState({});
+            const [pendingLockType, setPendingLockType] = useState(null);
+            const [pillGlowId, setPillGlowId] = useState(null);
+            const [renameConfirmData, setRenameConfirmData] = useState(null);
             const touchRef = useRef(null);
             const contentRef = useRef(null);
             const longPressRef = useRef(null);
@@ -3075,7 +3712,11 @@
                 // Check for per-day split first
                 const splitRecord = await dbOps.dayNotes.get(`__split_${currentDate}`);
                 if (splitRecord && splitRecord.note) {
-                    setDayLabel(splitRecord.note);
+                    if (splitRecord.note === '__none__') {
+                        setDayLabel('');
+                    } else {
+                        setDayLabel(splitRecord.note);
+                    }
                 } else {
                     // No per-day split stored — derive from weekly template
                     const d = parseLocalDate(currentDate);
@@ -3091,17 +3732,45 @@
             }, [currentDate]);
 
             const setDaySplit = async (date, split) => {
-                await dbOps.dayNotes.set(`__split_${date}`, split);
-                if (date === currentDate) setDayLabel(split);
+                const value = split || '__none__';
+                await dbOps.dayNotes.set(`__split_${date}`, value);
+                if (date === currentDate) {
+                    setDayLabel(value === '__none__' ? '' : split);
+                }
             };
 
             useEffect(() => {
                 initDB().then(async () => {
+                    await bootstrapDefaultExercises();
                     await loadDayData();
                     const cats = await getCategories();
                     setCategories(cats);
+                    // Load unit preference
+                    const unitRecord = await dbOps.dayNotes.get('__unit__');
+                    if (unitRecord && unitRecord.note) {
+                        setUnit(unitRecord.note);
+                    }
+                    // Load bodyweight
+                    const bwRecord = await dbOps.dayNotes.get('__bodyweight__');
+                    if (bwRecord && bwRecord.note) {
+                        setBodyweight(parseFloat(bwRecord.note));
+                    }
                 });
             }, [currentDate, loadDayData]);
+
+            useEffect(() => {
+                if (!expandedExercise) return;
+                const loadExNotes = async () => {
+                    const note = await dbOps.sessionNotes.getByExerciseAndDate(expandedExercise, currentDate);
+                    if (note) {
+                        if (note.mood) setInlineMood(prev => ({ ...prev, [expandedExercise]: note.mood }));
+                        if (note.formCueText) setInlineFormCue(prev => ({ ...prev, [expandedExercise]: note.formCueText }));
+                        if (note.freeText) setInlineNote(prev => ({ ...prev, [expandedExercise]: note.freeText }));
+                        if (note.tags && note.tags.length > 0) setSelectedQuickNotes(prev => ({ ...prev, [expandedExercise]: note.tags }));
+                    }
+                };
+                loadExNotes();
+            }, [expandedExercise, currentDate]);
 
             const handleExerciseSelect = async (exercise) => {
                 if (!exercise) {
@@ -3115,7 +3784,9 @@
 
             const handleCreateExercise = async (exercise) => {
                 setSelectedExercise(exercise);
-                setModal('activityHistory');
+                setPreviousWeight(null);
+                setSetNumber(1);
+                setModal('weightPicker');
             };
 
             const handleLogSet = async () => {
@@ -3128,12 +3799,43 @@
                 setPreviousWeight(lastSetForExercise?.weight || null);
             };
 
+            const handleUniformWeight = async () => {
+                setPendingLockType('uniformWeight');
+                const daySets = await dbOps.sets.getByDate(currentDate);
+                const exerciseSets = daySets.filter(s => s.exerciseId === selectedExercise.id);
+                setSetNumber(exerciseSets.length + 1);
+                setModal('weightPicker');
+                const lastSetForExercise = exerciseSets.sort((a, b) => b.setOrder - a.setOrder)[0];
+                setPreviousWeight(lastSetForExercise?.weight || null);
+            };
+
+            const handleUniformReps = async () => {
+                setPendingLockType('uniformReps');
+                const daySets = await dbOps.sets.getByDate(currentDate);
+                const exerciseSets = daySets.filter(s => s.exerciseId === selectedExercise.id);
+                setSetNumber(exerciseSets.length + 1);
+                setModal('weightPicker');
+                const lastSetForExercise = exerciseSets.sort((a, b) => b.setOrder - a.setOrder)[0];
+                setPreviousWeight(lastSetForExercise?.weight || null);
+            };
+
+            const handleBoth = async () => {
+                setPendingLockType('both');
+                const daySets = await dbOps.sets.getByDate(currentDate);
+                const exerciseSets = daySets.filter(s => s.exerciseId === selectedExercise.id);
+                setSetNumber(exerciseSets.length + 1);
+                setModal('weightPicker');
+                const lastSetForExercise = exerciseSets.sort((a, b) => b.setOrder - a.setOrder)[0];
+                setPreviousWeight(lastSetForExercise?.weight || null);
+            };
+
             const handleWeightSelected = async (weightData) => {
                 if (!weightData) {
                     setModal(null);
                     setSelectedExercise(null);
                     setSelectedWeight(null);
                     setPreviousWeight(null);
+                    setPrefilledReps(null);
                     return;
                 }
 
@@ -3141,6 +3843,55 @@
 
                 if (selectedExercise.type === 'timed') {
                     setModal('timedDuration');
+                } else if (prefilledReps !== null) {
+                    // Auto-save with prefilled reps
+                    const daySets = await dbOps.sets.getByDate(currentDate);
+                    let exerciseOrder = 1;
+                    const existingExercise = daySets.filter(s => s.exerciseId === selectedExercise.id);
+                    if (existingExercise.length === 0) {
+                        exerciseOrder = Math.max(...daySets.map(s => s.exerciseOrder), 0) + 1;
+                    } else {
+                        exerciseOrder = existingExercise[0].exerciseOrder;
+                    }
+
+                    const setOrder = existingExercise.length + 1;
+
+                    const fullExPrefill = await dbOps.exercises.get(selectedExercise.id);
+                    const wmPrefill = fullExPrefill?.weightMeaning || 'total';
+
+                    const set = {
+                        id: generateId('set'),
+                        date: currentDate,
+                        exerciseId: selectedExercise.id,
+                        exerciseName: selectedExercise.name,
+                        exerciseOrder,
+                        setOrder,
+                        weight: weightData.weight,
+                        weightType: weightData.weightType,
+                        reps: prefilledReps,
+                        duration: null,
+                        weightMeaning: wmPrefill,
+                        createdAt: Date.now(),
+                    };
+
+                    // CHANGE 6: Record bandedColor if present
+                    if (weightData.weightType === 'banded' && weightData.bandedColor) {
+                        set.bandedColor = weightData.bandedColor;
+                    }
+
+                    await dbOps.sets.add(set);
+
+                    selectedExercise.lastUsed = currentDate;
+                    await dbOps.exercises.update(selectedExercise);
+
+                    setLoggedSetCount(loggedSetCount + 1);
+                    setModal(null);
+                    setSelectedExercise(null);
+                    setSelectedWeight(null);
+                    setPreviousWeight(null);
+                    setPrefilledReps(null);
+
+                    await loadDayData();
                 } else {
                     setModal('repPicker');
                 }
@@ -3166,6 +3917,9 @@
 
                 const setOrder = existingExercise.length + 1;
 
+                const fullExercise = await dbOps.exercises.get(selectedExercise.id);
+                const weightMeaning = fullExercise?.weightMeaning || 'total';
+
                 const set = {
                     id: generateId('set'),
                     date: currentDate,
@@ -3177,8 +3931,14 @@
                     weightType: selectedWeight.weightType,
                     reps,
                     duration: null,
+                    weightMeaning,
                     createdAt: Date.now(),
                 };
+
+                // CHANGE 6: Record bandedColor if present
+                if (selectedWeight.weightType === 'banded' && selectedWeight.bandedColor) {
+                    set.bandedColor = selectedWeight.bandedColor;
+                }
 
                 await dbOps.sets.add(set);
 
@@ -3192,6 +3952,11 @@
                 setPreviousWeight(null);
 
                 await loadDayData();
+
+                if (pendingLockType) {
+                    setExerciseLocks(prev => ({ ...prev, [selectedExercise.id]: pendingLockType }));
+                    setPendingLockType(null);
+                }
             };
 
             const handleDurationSelected = async (duration) => {
@@ -3214,6 +3979,9 @@
 
                 const setOrder = existingExercise.length + 1;
 
+                const fullExerciseDur = await dbOps.exercises.get(selectedExercise.id);
+                const weightMeaningDur = fullExerciseDur?.weightMeaning || 'total';
+
                 const set = {
                     id: generateId('set'),
                     date: currentDate,
@@ -3225,8 +3993,14 @@
                     weightType: selectedWeight.weightType,
                     reps: null,
                     duration,
+                    weightMeaning: weightMeaningDur,
                     createdAt: Date.now(),
                 };
+
+                // CHANGE 6: Record bandedColor if present
+                if (selectedWeight.weightType === 'banded' && selectedWeight.bandedColor) {
+                    set.bandedColor = selectedWeight.bandedColor;
+                }
 
                 await dbOps.sets.add(set);
 
@@ -3240,6 +4014,11 @@
                 setPreviousWeight(null);
 
                 await loadDayData();
+
+                if (pendingLockType) {
+                    setExerciseLocks(prev => ({ ...prev, [selectedExercise.id]: pendingLockType }));
+                    setPendingLockType(null);
+                }
             };
 
             const handleDeleteSet = async (setId) => {
@@ -3253,6 +4032,7 @@
                 setSelectedWeight({
                     weight: set.weight,
                     weightType: set.weightType,
+                    bandedColor: set.bandedColor,
                 });
 
                 if (set.reps) {
@@ -3334,16 +4114,12 @@
                 const handleSave = async () => {
                     if (!newName.trim()) return;
 
-                    exercise.name = newName.trim();
-                    await dbOps.exercises.update(exercise);
-
-                    const allSets = await dbOps.sets.getByExerciseId(exercise.id);
-                    for (const set of allSets) {
-                        set.exerciseName = newName.trim();
-                        await dbOps.sets.update(set);
-                    }
-
-                    onSave();
+                    // CHANGE 5: Instead of window.confirm, set renameConfirmData to show custom modal
+                    setRenameConfirmData({
+                        exerciseId: exercise.id,
+                        newName: newName.trim(),
+                        exercise: exercise
+                    });
                 };
 
                 return (
@@ -3400,6 +4176,124 @@
 
                     <div className="content" ref={contentRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
                         <div className="content-padding">
+                            {/* CHANGE 8: Bodyweight banner with flag shimmer - only on today's date */}
+                            {!weightBannerDismissed && currentDate === getTodayString() && exercises.length > 0 && !showBWEditor && (
+                                <div
+                                    onClick={() => { setShowBWEditor(true); setBWEditValue(bodyweight ? bodyweight.toString() : ''); }}
+                                    style={{
+                                        padding: '10px 14px',
+                                        marginBottom: '12px',
+                                        background: 'linear-gradient(90deg, rgba(180,60,60,0.08) 0%, rgba(220,80,80,0.2) 25%, rgba(180,60,60,0.08) 50%, rgba(180,60,60,0.08) 100%)',
+                                        backgroundSize: '200% 100%',
+                                        color: '#e8a0a0',
+                                        border: '1px solid rgba(180,60,60,0.15)',
+                                        borderRadius: '10px',
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        fontSize: '13px',
+                                        cursor: 'pointer',
+                                        position: 'relative',
+                                        animation: 'flagShimmer 2s ease-in-out 3, flagShimmerSlow 8s ease-in-out 6s infinite'
+                                    }}
+                                >
+                                    Update today's weight? {bodyweight && `(${bodyweight} ${unit})`}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setWeightBannerDismissed(true);
+                                        }}
+                                        style={{
+                                            position: 'absolute',
+                                            top: '6px',
+                                            right: '8px',
+                                            background: 'none',
+                                            border: 'none',
+                                            color: '#e8a0a0',
+                                            fontSize: '16px',
+                                            cursor: 'pointer',
+                                            padding: 0,
+                                            width: '24px',
+                                            height: '24px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Bodyweight editor */}
+                            {exercises.length === 0 && (
+                                <>
+                                    {!showBWEditor ? (
+                                        <div style={{ padding: '10px 12px', marginBottom: '12px', background: 'rgba(199, 125, 160, 0.08)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div style={{ fontSize: '13px', color: bodyweight ? '#c77da0' : '#666' }}>
+                                                {bodyweight ? `${bodyweight} ${unit}` : 'Tap to set bodyweight'}
+                                            </div>
+                                            <button
+                                                onClick={() => { setShowBWEditor(true); setBWEditValue(bodyweight ? bodyweight.toString() : ''); }}
+                                                style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: '13px', padding: '4px 8px' }}
+                                            >
+                                                ✎
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div style={{ padding: '10px 12px', marginBottom: '12px', background: 'rgba(199, 125, 160, 0.12)', borderRadius: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                            <input
+                                                type="number"
+                                                value={bwEditValue}
+                                                onChange={(e) => setBWEditValue(e.target.value)}
+                                                placeholder="Weight"
+                                                style={{ flex: 1, padding: '6px 8px', borderRadius: '6px', border: '1px solid #333', background: 'rgba(255,255,255,0.05)', color: '#e0e0e0', fontSize: '13px' }}
+                                            />
+                                            <button
+                                                onClick={async () => {
+                                                    if (bwEditValue.trim()) {
+                                                        const val = parseFloat(bwEditValue);
+                                                        setBodyweight(val);
+                                                        await dbOps.dayNotes.set('__bodyweight__', bwEditValue.trim());
+                                                    }
+                                                    setShowBWEditor(false);
+                                                }}
+                                                style={{ padding: '6px 12px', borderRadius: '6px', background: '#8b3a62', border: 'none', color: '#fff', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}
+                                            >
+                                                Save
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {/* Bodyweight input editor when opened from banner */}
+                            {showBWEditor && exercises.length > 0 && (
+                                <div style={{ padding: '10px 12px', marginBottom: '12px', background: 'rgba(199, 125, 160, 0.12)', borderRadius: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <input
+                                        type="number"
+                                        value={bwEditValue}
+                                        onChange={(e) => setBWEditValue(e.target.value)}
+                                        placeholder="Weight"
+                                        autoFocus
+                                        style={{ flex: 1, padding: '6px 8px', borderRadius: '6px', border: '1px solid #333', background: 'rgba(255,255,255,0.05)', color: '#e0e0e0', fontSize: '13px' }}
+                                    />
+                                    <button
+                                        onClick={async () => {
+                                            if (bwEditValue.trim()) {
+                                                const val = parseFloat(bwEditValue);
+                                                setBodyweight(val);
+                                                await dbOps.dayNotes.set('__bodyweight__', bwEditValue.trim());
+                                            }
+                                            setShowBWEditor(false);
+                                        }}
+                                        style={{ padding: '6px 12px', borderRadius: '6px', background: '#8b3a62', border: 'none', color: '#fff', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}
+                                    >
+                                        Save
+                                    </button>
+                                </div>
+                            )}
+
                             {exercises.length === 0 ? (
                                 <div className="empty-state">
                                     {currentDate === getTodayString() ? (
@@ -3412,15 +4306,74 @@
                                 exercises.map((exercise) => {
                                     const isExpanded = expandedExercise === exercise.exerciseId;
                                     return (
-                                        <div key={exercise.exerciseId} className="exercise-group" style={isExpanded ? { border: '1px solid rgba(139, 58, 98, 0.12)', borderRadius: '12px', padding: '12px', background: 'rgba(139, 58, 98, 0.03)' } : {}}>
+                                        <div key={exercise.exerciseId} className="exercise-group" style={isExpanded ? { background: 'rgba(139, 58, 98, 0.03)', borderRadius: '10px', padding: '8px' } : {}}>
                                             <div
                                                 className="exercise-collapsible"
                                                 onClick={() => setExpandedExercise(isExpanded ? null : exercise.exerciseId)}
                                             >
                                                 <div className="exercise-toggle-header">
-                                                    <div className="exercise-chevron">{isExpanded ? '▾' : '▸'}</div>
                                                     <div className="exercise-name">{exercise.exerciseName}</div>
+                                                    {(() => {
+                                                        const lock = exerciseLocks[exercise.exerciseId];
+
+                                                        return lock ? (
+                                                            <div style={{ position: 'relative', marginLeft: '6px' }}>
+                                                                <div
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setExerciseLocks(prev => {
+                                                                            const next = { ...prev };
+                                                                            delete next[exercise.exerciseId];
+                                                                            return next;
+                                                                        });
+                                                                    }}
+                                                                    style={{
+                                                                        padding: '2px 10px',
+                                                                        borderRadius: '20px',
+                                                                        background: '#fff',
+                                                                        color: '#111',
+                                                                        fontSize: '9px',
+                                                                        fontWeight: '700',
+                                                                        cursor: 'pointer',
+                                                                        animation: pillGlowId === exercise.exerciseId ? 'pillGlow 0.8s ease-in-out' : 'none',
+                                                                        border: 'none',
+                                                                        outline: 'none'
+                                                                    }}
+                                                                >
+                                                                    locked
+                                                                </div>
+                                                                {pillGlowId === exercise.exerciseId && (
+                                                                    <span
+                                                                        style={{
+                                                                            position: 'absolute',
+                                                                            right: '-40px',
+                                                                            top: '50%',
+                                                                            color: '#fff',
+                                                                            fontSize: '10px',
+                                                                            fontWeight: '500',
+                                                                            whiteSpace: 'nowrap',
+                                                                            animation: 'unlockHintFade 1.2s ease-in-out',
+                                                                            pointerEvents: 'none'
+                                                                        }}
+                                                                    >
+                                                                        unlock
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        ) : null;
+                                                    })()}
+                                                    {isExpanded && (
+                                                        <button
+                                                            className="exercise-menu-btn"
+                                                            onClick={(e) => { e.stopPropagation(); setModal(`menu-${exercise.exerciseId}`); }}
+                                                            style={{ marginLeft: 'auto', padding: '4px 12px', fontSize: '14px', color: '#999', background: 'none', border: 'none', cursor: 'pointer', WebkitAppearance: 'none' }}
+                                                        >
+                                                            ⋯
+                                                        </button>
+                                                    )}
                                                 </div>
+
+
                                                 <div className="set-boxes-container">
                                                     {exercise.sets.map((set, idx) => (
                                                         <div
@@ -3430,7 +4383,7 @@
                                                             onClick={() => isExpanded && handleEditSet(set)}
                                                         >
                                                             <div className="set-box-content">
-                                                                {formatSetBox(set, exercise.sets[idx - 1])}
+                                                                {formatSetBox(set, exercise.sets[idx - 1], unit)}
                                                             </div>
                                                             {isExpanded && (
                                                                 <button
@@ -3449,38 +4402,243 @@
                                             </div>
 
                                             {isExpanded && (
-                                                <div style={{ display: 'flex', gap: '8px', marginTop: '6px', alignItems: 'center' }}>
+                                                <div style={{ marginTop: '6px' }}>
                                                     <button
                                                         className="btn btn-add-set"
-                                                        style={{ flex: 1, marginBottom: 0 }}
-                                                        onClick={() => {
+                                                        style={{ width: '100%', marginBottom: 0 }}
+                                                        onClick={async () => {
+                                                            const lock = exerciseLocks[exercise.exerciseId];
+                                                            const lastSet = exercise.sets[exercise.sets.length - 1];
+
                                                             setSelectedExercise({ id: exercise.exerciseId, name: exercise.exerciseName, type: exercise.sets[0]?.type || 'reps' });
-                                                            setPreviousWeight(exercise.sets[exercise.sets.length - 1]?.weight || null);
+                                                            setPreviousWeight(lastSet?.weight || null);
                                                             setSetNumber(exercise.sets.length + 1);
-                                                            setModal('weightPicker');
+
+                                                            if (lock === 'uniformWeight') {
+                                                                // Use last set's weight, open reps picker only
+                                                                setSelectedWeight({ weight: lastSet.weight, weightType: lastSet.weightType, bandedColor: lastSet.bandedColor });
+                                                                if (lastSet.type === 'timed') {
+                                                                    setModal('timedDuration');
+                                                                } else {
+                                                                    setModal('repPicker');
+                                                                }
+                                                            } else if (lock === 'uniformReps') {
+                                                                // Open weight picker, then auto-apply last set's reps
+                                                                setPrefilledReps(lastSet.reps || lastSet.duration);
+                                                                setModal('weightPicker');
+                                                            } else if (lock === 'both') {
+                                                                // Instantly duplicate last set
+                                                                const daySets = await dbOps.sets.getByDate(currentDate);
+                                                                const exerciseSets = daySets.filter(s => s.exerciseId === exercise.exerciseId);
+                                                                const newSet = {
+                                                                    id: generateId('set'),
+                                                                    date: currentDate,
+                                                                    exerciseId: exercise.exerciseId,
+                                                                    exerciseName: exercise.exerciseName,
+                                                                    exerciseOrder: lastSet.exerciseOrder || exerciseSets[0]?.exerciseOrder || 1,
+                                                                    setOrder: exerciseSets.length + 1,
+                                                                    weight: lastSet.weight,
+                                                                    weightType: lastSet.weightType,
+                                                                    reps: lastSet.reps,
+                                                                    duration: lastSet.duration,
+                                                                    weightMeaning: lastSet.weightMeaning || 'total',
+                                                                    createdAt: Date.now(),
+                                                                };
+                                                                await dbOps.sets.add(newSet);
+                                                                setLoggedSetCount(loggedSetCount + 1);
+                                                                await loadDayData();
+                                                            } else {
+                                                                // Normal flow: weight picker → reps picker
+                                                                setModal('weightPicker');
+                                                            }
                                                         }}
                                                     >
                                                         + Add Set
                                                     </button>
-                                                    <button
-                                                        className="exercise-menu-btn"
-                                                        onClick={(e) => { e.stopPropagation(); setModal(`menu-${exercise.exerciseId}`); }}
-                                                        style={{ width: 'auto', padding: '4px 12px', fontSize: '14px', color: '#999' }}
-                                                    >
-                                                        ⋯
-                                                    </button>
                                                 </div>
                                             )}
 
-                                            {!isExpanded && (
-                                                <button
-                                                    className="exercise-menu-btn"
-                                                    onClick={() => setModal(`menu-${exercise.exerciseId}`)}
-                                                    style={{ position: 'absolute', right: '16px', top: '0' }}
-                                                >
-                                                    ···
-                                                </button>
+                                            {isExpanded && exercise.sets.length > 0 && (() => {
+                                                const lock = exerciseLocks[exercise.exerciseId];
+                                                const lastSet = exercise.sets[exercise.sets.length - 1];
+                                                return (
+                                                    <div style={{ display: 'flex', marginTop: '4px', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(139, 58, 98, 0.3)', height: '44px' }}>
+                                                        <button
+                                                            style={{
+                                                                flex: 1, padding: '8px 4px', border: 'none', background: lock === 'uniformWeight' ? '#8b3a62' : 'rgba(139, 58, 98, 0.08)',
+                                                                color: lock === 'uniformWeight' ? '#fff' : (lock ? 'rgba(199, 125, 160, 0.3)' : '#c77da0'),
+                                                                fontSize: '11px', fontWeight: '500', cursor: 'pointer', borderRight: '1px solid rgba(139, 58, 98, 0.2)',
+                                                                WebkitAppearance: 'none', opacity: lock && lock !== 'uniformWeight' ? 0.3 : 1
+                                                            }}
+                                                            onClick={() => {
+                                                                if (lock) {
+                                                                    setPillGlowId(exercise.exerciseId);
+                                                                    setTimeout(() => setPillGlowId(null), 1200);
+                                                                } else {
+                                                                    setSelectedExercise({ id: exercise.exerciseId, name: exercise.exerciseName, type: lastSet.type || 'reps' });
+                                                                    setSelectedWeight({ weight: lastSet.weight, weightType: lastSet.weightType, bandedColor: lastSet.bandedColor });
+                                                                    setPreviousWeight(lastSet.weight);
+                                                                    setSetNumber(exercise.sets.length + 1);
+                                                                    if (lastSet.type === 'timed') {
+                                                                        setModal('timedDuration');
+                                                                    } else {
+                                                                        setModal('repPicker');
+                                                                    }
+                                                                }
+                                                            }}
+                                                        >
+                                                            Uniform Weight
+                                                        </button>
+                                                        <button
+                                                            style={{
+                                                                flex: 1, padding: '8px 4px', border: 'none', background: lock === 'uniformReps' ? '#8b3a62' : 'rgba(139, 58, 98, 0.08)',
+                                                                color: lock === 'uniformReps' ? '#fff' : (lock ? 'rgba(199, 125, 160, 0.3)' : '#c77da0'),
+                                                                fontSize: '11px', fontWeight: '500', cursor: 'pointer', borderRight: '1px solid rgba(139, 58, 98, 0.2)',
+                                                                WebkitAppearance: 'none', opacity: lock && lock !== 'uniformReps' ? 0.3 : 1
+                                                            }}
+                                                            onClick={() => {
+                                                                if (lock) {
+                                                                    setPillGlowId(exercise.exerciseId);
+                                                                    setTimeout(() => setPillGlowId(null), 1200);
+                                                                } else {
+                                                                    setSelectedExercise({ id: exercise.exerciseId, name: exercise.exerciseName, type: lastSet.type || 'reps' });
+                                                                    setPrefilledReps(lastSet.reps || lastSet.duration);
+                                                                    setPreviousWeight(lastSet.weight);
+                                                                    setSetNumber(exercise.sets.length + 1);
+                                                                    setModal('weightPicker');
+                                                                }
+                                                            }}
+                                                        >
+                                                            Uniform Reps
+                                                        </button>
+                                                        <button
+                                                            style={{
+                                                                flex: 1, padding: '8px 4px', border: 'none', background: lock === 'both' ? '#8b3a62' : 'rgba(139, 58, 98, 0.08)',
+                                                                color: lock === 'both' ? '#fff' : (lock ? 'rgba(199, 125, 160, 0.3)' : '#c77da0'),
+                                                                fontSize: '11px', fontWeight: '500', cursor: 'pointer',
+                                                                WebkitAppearance: 'none', opacity: lock && lock !== 'both' ? 0.3 : 1
+                                                            }}
+                                                            onClick={async () => {
+                                                                if (lock) {
+                                                                    setPillGlowId(exercise.exerciseId);
+                                                                    setTimeout(() => setPillGlowId(null), 1200);
+                                                                } else {
+                                                                    const daySets = await dbOps.sets.getByDate(currentDate);
+                                                                    const exerciseSets = daySets.filter(s => s.exerciseId === exercise.exerciseId);
+                                                                    const newSet = {
+                                                                        id: generateId('set'),
+                                                                        date: currentDate,
+                                                                        exerciseId: exercise.exerciseId,
+                                                                        exerciseName: exercise.exerciseName,
+                                                                        exerciseOrder: lastSet.exerciseOrder || exerciseSets[0]?.exerciseOrder || 1,
+                                                                        setOrder: exerciseSets.length + 1,
+                                                                        weight: lastSet.weight,
+                                                                        weightType: lastSet.weightType,
+                                                                        reps: lastSet.reps,
+                                                                        duration: lastSet.duration,
+                                                                        weightMeaning: lastSet.weightMeaning || 'total',
+                                                                        createdAt: Date.now(),
+                                                                    };
+                                                                    await dbOps.sets.add(newSet);
+                                                                    setLoggedSetCount(loggedSetCount + 1);
+                                                                    await loadDayData();
+                                                                }
+                                                            }}
+                                                        >
+                                                            Both
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })()}
+
+                                            {isExpanded && (
+                                                <>
+                                                    {/* Mood Segment Bar - Cotton Cloud pastels, green=best */}
+                                                    <div style={{ display: 'flex', marginTop: '4px', borderRadius: '8px', overflow: 'hidden', height: '31px' }}>
+                                                        {[
+                                                            { val: 1, color: '#F4A5AE' },
+                                                            { val: 2, color: '#F4C2A1' },
+                                                            { val: 3, color: '#F5E1A4' },
+                                                            { val: 4, color: '#A3D4E8' },
+                                                            { val: 5, color: '#A8E0C2' },
+                                                        ].map((m) => {
+                                                            const currentMood = inlineMood[exercise.exerciseId];
+                                                            const isSelected = currentMood === m.val;
+                                                            const hasSelection = currentMood != null;
+                                                            return (
+                                                                <button
+                                                                    key={m.val}
+                                                                    onClick={async () => {
+                                                                        const newMood = currentMood === m.val ? null : m.val;
+                                                                        setInlineMood(prev => ({ ...prev, [exercise.exerciseId]: newMood }));
+                                                                        const existing = await dbOps.sessionNotes.getByExerciseAndDate(exercise.exerciseId, currentDate);
+                                                                        if (existing) {
+                                                                            existing.mood = newMood;
+                                                                            await dbOps.sessionNotes.add(existing);
+                                                                        } else {
+                                                                            await dbOps.sessionNotes.add({
+                                                                                id: generateId('sn'),
+                                                                                exerciseId: exercise.exerciseId,
+                                                                                exerciseName: exercise.exerciseName,
+                                                                                date: currentDate,
+                                                                                mood: newMood,
+                                                                                tags: [],
+                                                                                formCueText: '',
+                                                                                freeText: '',
+                                                                            });
+                                                                        }
+                                                                    }}
+                                                                    style={{
+                                                                        flex: 1,
+                                                                        padding: 0,
+                                                                        border: 'none',
+                                                                        background: m.color,
+                                                                        cursor: 'pointer',
+                                                                        WebkitAppearance: 'none',
+                                                                        transition: 'opacity 0.2s',
+                                                                        opacity: hasSelection && !isSelected ? 0.25 : 1,
+                                                                    }}
+                                                                />
+                                                            );
+                                                        })}
+                                                    </div>
+
+                                                    {/* Form Cue + Note + Quick Notes buttons */}
+                                                    <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+                                                        <button
+                                                            onClick={() => setShowFormCueInput(showFormCueInput === exercise.exerciseId ? null : exercise.exerciseId)}
+                                                            style={{
+                                                                flex: 1, padding: '8px', border: '1px solid rgba(139,58,98,0.2)', borderRadius: '8px',
+                                                                background: inlineFormCue[exercise.exerciseId] ? 'rgba(139,58,98,0.15)' : 'rgba(139,58,98,0.05)',
+                                                                color: '#c77da0', fontSize: '11px', fontWeight: '500', cursor: 'pointer', WebkitAppearance: 'none',
+                                                            }}
+                                                        >
+                                                            {inlineFormCue[exercise.exerciseId] ? '✓ Form Cue' : 'Add Form Cue'}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setShowNoteInput(showNoteInput === exercise.exerciseId ? null : exercise.exerciseId)}
+                                                            style={{
+                                                                flex: 1, padding: '8px', border: '1px solid rgba(139,58,98,0.2)', borderRadius: '8px',
+                                                                background: inlineNote[exercise.exerciseId] ? 'rgba(139,58,98,0.15)' : 'rgba(139,58,98,0.05)',
+                                                                color: '#c77da0', fontSize: '11px', fontWeight: '500', cursor: 'pointer', WebkitAppearance: 'none',
+                                                            }}
+                                                        >
+                                                            {inlineNote[exercise.exerciseId] ? '✓ Note' : 'Add Note'}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setShowQuickNotes(showQuickNotes === exercise.exerciseId ? null : exercise.exerciseId)}
+                                                            style={{
+                                                                flex: 1, padding: '8px', border: '1px solid rgba(139,58,98,0.2)', borderRadius: '8px',
+                                                                background: selectedQuickNotes[exercise.exerciseId]?.length > 0 ? 'rgba(139,58,98,0.15)' : 'rgba(139,58,98,0.05)',
+                                                                color: '#c77da0', fontSize: '11px', fontWeight: '500', cursor: 'pointer', WebkitAppearance: 'none',
+                                                            }}
+                                                        >
+                                                            {selectedQuickNotes[exercise.exerciseId]?.length > 0 ? '✓ Notes' : 'Quick Notes'}
+                                                        </button>
+                                                    </div>
+                                                </>
                                             )}
+
                                         </div>
                                     );
                                 })
@@ -3491,6 +4649,301 @@
                             </button>
                         </div>
                     </div>
+
+                    {showFormCueInput !== null && (
+                        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+                             onClick={() => setShowFormCueInput(null)}>
+                            {/* CHANGE 9: Widened from 408px to 440px */}
+                            <div style={{ background: '#1e0e14', borderRadius: '16px', padding: '20px', width: '100%', maxWidth: '440px' }}
+                                 onClick={(e) => e.stopPropagation()}>
+                                <div style={{ fontSize: '14px', color: '#999', marginBottom: '12px', textAlign: 'center', fontStyle: 'italic' }}>
+                                    How can you improve this activity?
+                                </div>
+                                <textarea
+                                    autoFocus
+                                    placeholder="e.g. Keep elbows tucked, wider grip..."
+                                    value={inlineFormCue[showFormCueInput] || ''}
+                                    onChange={(e) => setInlineFormCue(prev => ({ ...prev, [showFormCueInput]: e.target.value }))}
+                                    style={{ width: '100%', minHeight: '80px', padding: '12px', borderRadius: '8px', border: '1px solid rgba(139,58,98,0.3)', background: 'rgba(255,255,255,0.04)', color: '#e0e0e0', fontSize: '14px', resize: 'vertical', fontFamily: 'inherit' }}
+                                />
+                                <button
+                                    onClick={async () => {
+                                        const val = inlineFormCue[showFormCueInput] || '';
+                                        const existing = await dbOps.sessionNotes.getByExerciseAndDate(showFormCueInput, currentDate);
+                                        if (existing) {
+                                            existing.formCueText = val;
+                                            await dbOps.sessionNotes.add(existing);
+                                        } else if (val) {
+                                            await dbOps.sessionNotes.add({
+                                                id: generateId('sn'), exerciseId: showFormCueInput, exerciseName: '',
+                                                date: currentDate, mood: null, tags: [], formCueText: val, freeText: '',
+                                            });
+                                        }
+                                        setShowFormCueInput(null);
+                                    }}
+                                    style={{ width: '100%', marginTop: '10px', padding: '12px', borderRadius: '8px', background: '#8b3a62', border: 'none', color: '#fff', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}
+                                >
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {showNoteInput !== null && (
+                        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+                             onClick={() => setShowNoteInput(null)}>
+                            {/* CHANGE 9: Widened from 408px to 440px */}
+                            <div style={{ background: '#1e0e14', borderRadius: '16px', padding: '20px', width: '100%', maxWidth: '440px' }}
+                                 onClick={(e) => e.stopPropagation()}>
+                                <div style={{ fontSize: '14px', color: '#999', marginBottom: '12px', textAlign: 'center', fontStyle: 'italic' }}>
+                                    What do you want to remember about this activity today?
+                                </div>
+                                <textarea
+                                    autoFocus
+                                    placeholder="Session note..."
+                                    value={inlineNote[showNoteInput] || ''}
+                                    onChange={(e) => setInlineNote(prev => ({ ...prev, [showNoteInput]: e.target.value }))}
+                                    style={{ width: '100%', minHeight: '80px', padding: '12px', borderRadius: '8px', border: '1px solid rgba(139,58,98,0.3)', background: 'rgba(255,255,255,0.04)', color: '#e0e0e0', fontSize: '14px', resize: 'vertical', fontFamily: 'inherit' }}
+                                />
+                                <button
+                                    onClick={async () => {
+                                        const val = inlineNote[showNoteInput] || '';
+                                        const existing = await dbOps.sessionNotes.getByExerciseAndDate(showNoteInput, currentDate);
+                                        if (existing) {
+                                            existing.freeText = val;
+                                            await dbOps.sessionNotes.add(existing);
+                                        } else if (val) {
+                                            await dbOps.sessionNotes.add({
+                                                id: generateId('sn'), exerciseId: showNoteInput, exerciseName: '',
+                                                date: currentDate, mood: null, tags: [], formCueText: '', freeText: val,
+                                            });
+                                        }
+                                        setShowNoteInput(null);
+                                    }}
+                                    style={{ width: '100%', marginTop: '10px', padding: '12px', borderRadius: '8px', background: '#8b3a62', border: 'none', color: '#fff', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}
+                                >
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {showQuickNotes !== null && (
+                        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+                             onClick={() => setShowQuickNotes(null)}>
+                            <div style={{ background: '#1e0e14', borderRadius: '16px', padding: '20px', width: '100%', maxWidth: '440px', maxHeight: '80vh', overflowY: 'auto' }}
+                                 onClick={(e) => e.stopPropagation()}>
+                                <div style={{ fontSize: '14px', color: '#999', marginBottom: '16px', textAlign: 'center', fontStyle: 'italic' }}>
+                                    Quick notes for this activity
+                                </div>
+
+                                {/* Physical Sensations */}
+                                <div style={{ marginBottom: '12px' }}>
+                                    <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#999', marginBottom: '6px', fontWeight: '600' }}>Physical Sensations</div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
+                                        {['Left shoulder pain', 'Right shoulder pain', 'Lower back tight', 'Knee discomfort', 'Wrist strain', 'Hip flexor tight', 'Neck stiff', 'Elbow pain', 'Ankle issue', 'Hamstring tight'].map(chip => (
+                                            <button
+                                                key={chip}
+                                                onClick={() => {
+                                                    setSelectedQuickNotes(prev => {
+                                                        const current = prev[showQuickNotes] || [];
+                                                        const isSelected = current.includes(chip);
+                                                        return {
+                                                            ...prev,
+                                                            [showQuickNotes]: isSelected
+                                                                ? current.filter(c => c !== chip)
+                                                                : [...current, chip]
+                                                        };
+                                                    });
+                                                }}
+                                                style={{
+                                                    padding: '6px 12px',
+                                                    borderRadius: '16px',
+                                                    fontSize: '11px',
+                                                    fontWeight: '500',
+                                                    cursor: 'pointer',
+                                                    border: selectedQuickNotes[showQuickNotes]?.includes(chip) ? 'none' : '1px solid rgba(139,58,98,0.3)',
+                                                    background: selectedQuickNotes[showQuickNotes]?.includes(chip) ? '#8b3a62' : 'rgba(139,58,98,0.1)',
+                                                    color: selectedQuickNotes[showQuickNotes]?.includes(chip) ? '#fff' : '#c77da0',
+                                                    WebkitAppearance: 'none',
+                                                }}
+                                            >
+                                                {chip}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Energy & Performance */}
+                                <div style={{ marginBottom: '12px' }}>
+                                    <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#999', marginBottom: '6px', fontWeight: '600' }}>Energy & Performance</div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
+                                        {['Feeling strong today', 'Low energy', 'Sluggish warm-up', 'Second wind kicked in', 'Peak performance', 'Running on fumes', 'Caffeine boost', 'Felt explosive'].map(chip => (
+                                            <button
+                                                key={chip}
+                                                onClick={() => {
+                                                    setSelectedQuickNotes(prev => {
+                                                        const current = prev[showQuickNotes] || [];
+                                                        const isSelected = current.includes(chip);
+                                                        return {
+                                                            ...prev,
+                                                            [showQuickNotes]: isSelected
+                                                                ? current.filter(c => c !== chip)
+                                                                : [...current, chip]
+                                                        };
+                                                    });
+                                                }}
+                                                style={{
+                                                    padding: '6px 12px',
+                                                    borderRadius: '16px',
+                                                    fontSize: '11px',
+                                                    fontWeight: '500',
+                                                    cursor: 'pointer',
+                                                    border: selectedQuickNotes[showQuickNotes]?.includes(chip) ? 'none' : '1px solid rgba(139,58,98,0.3)',
+                                                    background: selectedQuickNotes[showQuickNotes]?.includes(chip) ? '#8b3a62' : 'rgba(139,58,98,0.1)',
+                                                    color: selectedQuickNotes[showQuickNotes]?.includes(chip) ? '#fff' : '#c77da0',
+                                                    WebkitAppearance: 'none',
+                                                }}
+                                            >
+                                                {chip}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Form & Technique */}
+                                <div style={{ marginBottom: '12px' }}>
+                                    <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#999', marginBottom: '6px', fontWeight: '600' }}>Form & Technique</div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
+                                        {['Great mind-muscle connection', 'Form breaking down', 'Grip failing', 'Balance was off', 'Range of motion improved', 'Tempo was good', 'Struggled with lockout', 'Good stretch at bottom'].map(chip => (
+                                            <button
+                                                key={chip}
+                                                onClick={() => {
+                                                    setSelectedQuickNotes(prev => {
+                                                        const current = prev[showQuickNotes] || [];
+                                                        const isSelected = current.includes(chip);
+                                                        return {
+                                                            ...prev,
+                                                            [showQuickNotes]: isSelected
+                                                                ? current.filter(c => c !== chip)
+                                                                : [...current, chip]
+                                                        };
+                                                    });
+                                                }}
+                                                style={{
+                                                    padding: '6px 12px',
+                                                    borderRadius: '16px',
+                                                    fontSize: '11px',
+                                                    fontWeight: '500',
+                                                    cursor: 'pointer',
+                                                    border: selectedQuickNotes[showQuickNotes]?.includes(chip) ? 'none' : '1px solid rgba(139,58,98,0.3)',
+                                                    background: selectedQuickNotes[showQuickNotes]?.includes(chip) ? '#8b3a62' : 'rgba(139,58,98,0.1)',
+                                                    color: selectedQuickNotes[showQuickNotes]?.includes(chip) ? '#fff' : '#c77da0',
+                                                    WebkitAppearance: 'none',
+                                                }}
+                                            >
+                                                {chip}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Recovery & Context */}
+                                <div style={{ marginBottom: '12px' }}>
+                                    <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#999', marginBottom: '6px', fontWeight: '600' }}>Recovery & Context</div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
+                                        {['Poor sleep last night', 'Sore from yesterday', 'First day back', 'Post-rest day energy', 'Deload week', 'Coming back from injury', 'Ate well today', 'Skipped meal before'].map(chip => (
+                                            <button
+                                                key={chip}
+                                                onClick={() => {
+                                                    setSelectedQuickNotes(prev => {
+                                                        const current = prev[showQuickNotes] || [];
+                                                        const isSelected = current.includes(chip);
+                                                        return {
+                                                            ...prev,
+                                                            [showQuickNotes]: isSelected
+                                                                ? current.filter(c => c !== chip)
+                                                                : [...current, chip]
+                                                        };
+                                                    });
+                                                }}
+                                                style={{
+                                                    padding: '6px 12px',
+                                                    borderRadius: '16px',
+                                                    fontSize: '11px',
+                                                    fontWeight: '500',
+                                                    cursor: 'pointer',
+                                                    border: selectedQuickNotes[showQuickNotes]?.includes(chip) ? 'none' : '1px solid rgba(139,58,98,0.3)',
+                                                    background: selectedQuickNotes[showQuickNotes]?.includes(chip) ? '#8b3a62' : 'rgba(139,58,98,0.1)',
+                                                    color: selectedQuickNotes[showQuickNotes]?.includes(chip) ? '#fff' : '#c77da0',
+                                                    WebkitAppearance: 'none',
+                                                }}
+                                            >
+                                                {chip}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Mental & Motivation */}
+                                <div style={{ marginBottom: '16px' }}>
+                                    <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#999', marginBottom: '6px', fontWeight: '600' }}>Mental & Motivation</div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
+                                        {['Didn\'t want to be here', 'Crushed it', 'Pushed through plateau', 'Lost focus', 'In the zone', 'Nervous about weight', 'Confident today', 'Just going through motions'].map(chip => (
+                                            <button
+                                                key={chip}
+                                                onClick={() => {
+                                                    setSelectedQuickNotes(prev => {
+                                                        const current = prev[showQuickNotes] || [];
+                                                        const isSelected = current.includes(chip);
+                                                        return {
+                                                            ...prev,
+                                                            [showQuickNotes]: isSelected
+                                                                ? current.filter(c => c !== chip)
+                                                                : [...current, chip]
+                                                        };
+                                                    });
+                                                }}
+                                                style={{
+                                                    padding: '6px 12px',
+                                                    borderRadius: '16px',
+                                                    fontSize: '11px',
+                                                    fontWeight: '500',
+                                                    cursor: 'pointer',
+                                                    border: selectedQuickNotes[showQuickNotes]?.includes(chip) ? 'none' : '1px solid rgba(139,58,98,0.3)',
+                                                    background: selectedQuickNotes[showQuickNotes]?.includes(chip) ? '#8b3a62' : 'rgba(139,58,98,0.1)',
+                                                    color: selectedQuickNotes[showQuickNotes]?.includes(chip) ? '#fff' : '#c77da0',
+                                                    WebkitAppearance: 'none',
+                                                }}
+                                            >
+                                                {chip}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={async () => {
+                                        const tags = selectedQuickNotes[showQuickNotes] || [];
+                                        const existing = await dbOps.sessionNotes.getByExerciseAndDate(showQuickNotes, currentDate);
+                                        if (existing) {
+                                            existing.tags = tags;
+                                            await dbOps.sessionNotes.add(existing);
+                                        } else if (tags.length > 0) {
+                                            await dbOps.sessionNotes.add({
+                                                id: generateId('sn'), exerciseId: showQuickNotes, exerciseName: '',
+                                                date: currentDate, mood: null, tags: tags, formCueText: '', freeText: '',
+                                            });
+                                        }
+                                        setShowQuickNotes(null);
+                                    }}
+                                    style={{ width: '100%', marginTop: '10px', padding: '12px', borderRadius: '8px', background: '#8b3a62', border: 'none', color: '#fff', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}
+                                >
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
                     {modal === 'exercisePicker' && (
                         <ExercisePickerModal
@@ -3508,6 +4961,7 @@
                     {modal === 'createExercise' && (
                         <CreateExerciseModal
                         categories={categories}
+                        dayLabel={dayLabel}
                         onSave={handleCreateExercise}
                         onCancel={() => setModal('exercisePicker')}
                         />
@@ -3517,10 +4971,14 @@
                         <HistoryModal
                             exercise={selectedExercise}
                             onLogSet={handleLogSet}
+                            onUniformWeight={handleUniformWeight}
+                            onUniformReps={handleUniformReps}
+                            onBoth={handleBoth}
                             onClose={() => {
                                 setModal('exercisePicker');
                                 setSelectedExercise(null);
                             }}
+                            unit={unit}
                         />
                     )}
 
@@ -3531,6 +4989,7 @@
                             selectedDate={currentDate}
                             previousWeight={previousWeight}
                             setNumber={setNumber}
+                            unit={unit}
                         />
                     )}
 
@@ -3539,6 +4998,7 @@
                             exercise={selectedExercise}
                             weight={selectedWeight.weight}
                             weightType={selectedWeight.weightType}
+                            bandedColor={selectedWeight.bandedColor}
                             onSelectReps={handleRepsSelected}
                             setNumber={setNumber}
                         />
@@ -3549,13 +5009,14 @@
                             exercise={selectedExercise}
                             weight={selectedWeight.weight}
                             weightType={selectedWeight.weightType}
+                            bandedColor={selectedWeight.bandedColor}
                             onSelectDuration={handleDurationSelected}
                             setNumber={setNumber}
                         />
                     )}
 
                     {modal === 'settings' && (
-                        <SettingsModal onClose={() => { setModal(null); loadDayData(); }} categories={categories} onCategoriesChanged={(cats) => setCategories(cats)} />
+                        <SettingsModal onClose={() => { setModal(null); loadDayData(); }} categories={categories} onCategoriesChanged={(cats) => setCategories(cats)} unit={unit} setUnit={setUnit} />
                     )}
 
                     {modal === 'sessionNote' && selectedExercise && (
@@ -3606,6 +5067,68 @@
                         />
                     )}
 
+                    {/* CHANGE 5: Custom themed rename confirmation modal */}
+                    {renameConfirmData && (
+                        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+                             onClick={() => setRenameConfirmData(null)}>
+                            <div style={{ background: '#1e0e14', borderRadius: '16px', padding: '20px', maxWidth: '340px', width: '100%' }}
+                                 onClick={(e) => e.stopPropagation()}>
+                                <div style={{ fontSize: '14px', color: '#e0e0e0', textAlign: 'center', marginBottom: '20px', lineHeight: '1.5' }}>
+                                    This will rename the activity for all days, not just today.
+                                </div>
+                                <div style={{ display: 'flex', gap: '12px' }}>
+                                    <button
+                                        onClick={() => setRenameConfirmData(null)}
+                                        style={{
+                                            flex: '1',
+                                            padding: '12px 16px',
+                                            backgroundColor: 'rgba(139,58,98,0.1)',
+                                            border: '1px solid rgba(139,58,98,0.3)',
+                                            color: '#c77da0',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            fontSize: '14px',
+                                            fontWeight: '600'
+                                        }}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            const ex = renameConfirmData.exercise;
+                                            ex.name = renameConfirmData.newName;
+                                            await dbOps.exercises.update(ex);
+
+                                            const allSets = await dbOps.sets.getByExerciseId(renameConfirmData.exerciseId);
+                                            for (const set of allSets) {
+                                                set.exerciseName = renameConfirmData.newName;
+                                                await dbOps.sets.update(set);
+                                            }
+
+                                            setRenameConfirmData(null);
+                                            setModal(null);
+                                            setSelectedExercise(null);
+                                            await loadDayData();
+                                        }}
+                                        style={{
+                                            flex: '1',
+                                            padding: '12px 16px',
+                                            backgroundColor: '#8b3a62',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            fontSize: '14px',
+                                            fontWeight: '600'
+                                        }}
+                                    >
+                                        Confirm
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {modal === 'history' && selectedExercise && (
                         <HistoryModal
                             exercise={selectedExercise}
@@ -3613,6 +5136,7 @@
                                 setModal(null);
                                 setSelectedExercise(null);
                             }}
+                            unit={unit}
                         />
                     )}
 
@@ -3626,6 +5150,7 @@
                                 await setDaySplit(currentDate, newSplit);
                                 await loadDayData();
                             }}
+                            unit={unit}
                         />
                     )}
 
@@ -3647,17 +5172,6 @@
                                             >
                                                 View History
                                             </div>
-                                            <div
-                                                className="context-menu-item"
-                                                style={{ padding: '14px 20px', color: '#c77da0', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}
-                                                onClick={() => {
-                                                    handleMenuClick(exercise, 'sessionNote');
-                                                    setModal(null);
-                                                }}
-                                            >
-                                                Session Note
-                                            </div>
-
                                             <div
                                                 className="context-menu-item"
                                                 style={{ padding: '14px 20px', color: '#c77da0', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}
