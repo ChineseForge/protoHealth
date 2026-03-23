@@ -299,29 +299,9 @@
         .exercise-group {
             margin-bottom: 12px;
             position: relative;
-            overflow: hidden;
         }
         .exercise-group-inner {
             position: relative;
-            z-index: 1;
-            background: #0d0d0d;
-            transition: transform 0.2s ease;
-        }
-        .swipe-delete-btn {
-            position: absolute;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            width: 80px;
-            background: #a03050;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 12px;
-            font-weight: 700;
-            z-index: 0;
-            border-radius: 0 12px 12px 0;
         }
 
         .exercise-header {
@@ -530,7 +510,7 @@
 
         .button-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 8px;
             margin-bottom: 16px;
         }
@@ -960,37 +940,6 @@
             padding: 4px 0;
         }
 
-        /* Menu Context */
-        .context-menu {
-            position: absolute;
-            background: rgba(139, 58, 98, 0.08);
-            border: 1px solid rgba(139, 58, 98, 0.2);
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-            z-index: 200;
-            min-width: 160px;
-        }
-
-        .context-menu-item {
-            padding: 12px 16px;
-            border-bottom: 1px solid rgba(139, 58, 98, 0.2);
-            cursor: pointer;
-            font-size: 14px;
-            color: #e0e0e0;
-            transition: all 0.2s ease;
-        }
-
-        .context-menu-item:last-child {
-            border-bottom: none;
-        }
-
-        .context-menu-item:active {
-            background: rgba(139, 58, 98, 0.1);
-        }
-
-        .context-menu-item.danger {
-            color: #ff6b6b;
-        }
 
         /* Confirmation Dialog */
         .confirmation-dialog {
@@ -1967,6 +1916,8 @@
         const EditCategoriesModal = ({ categories, onSave, onCancel }) => {
             const [cats, setCats] = useState([...categories]);
             const [newCat, setNewCat] = useState('');
+            const [renamingCat, setRenamingCat] = useState(null);
+            const [renameValue, setRenameValue] = useState('');
 
             const addCategory = () => {
                 const name = newCat.trim();
@@ -1974,6 +1925,44 @@
                     setCats([...cats, name]);
                     setNewCat('');
                 }
+            };
+
+            const startRename = (cat) => {
+                setRenamingCat(cat);
+                setRenameValue(cat);
+            };
+
+            const confirmRename = async () => {
+                const newName = renameValue.trim();
+                if (!newName || newName === renamingCat) { setRenamingCat(null); return; }
+                if (cats.some(c => c !== renamingCat && c.toLowerCase() === newName.toLowerCase())) { setRenamingCat(null); return; }
+                setCats(cats.map(c => c === renamingCat ? newName : c));
+                // Update weekly template references
+                const currentTemps = await dbOps.templates.getAll();
+                for (const template of currentTemps) {
+                    if (template.label && template.label.toLowerCase() === renamingCat.toLowerCase()) {
+                        await dbOps.templates.set(template.dayOfWeek, newName);
+                    }
+                }
+                // Update day-split references
+                const allNotes = await dbOps.dayNotes.getAll();
+                for (const note of allNotes) {
+                    if (note.date && note.date.startsWith('__split_') && note.note && note.note.toLowerCase() === renamingCat.toLowerCase()) {
+                        await dbOps.dayNotes.set(note.date, newName);
+                    }
+                }
+                // Update exercise category references
+                const allExercises = await dbOps.exercises.getAll();
+                for (const ex of allExercises) {
+                    const exCats = getExCategories(ex);
+                    if (exCats.some(c => c.toLowerCase() === renamingCat.toLowerCase())) {
+                        const newCats = exCats.map(c => c.toLowerCase() === renamingCat.toLowerCase() ? newName.toLowerCase() : c);
+                        ex.categories = newCats;
+                        if (ex.category && ex.category.toLowerCase() === renamingCat.toLowerCase()) ex.category = newName.toLowerCase();
+                        await safeDb(() => dbOps.exercises.update(ex), 'rename category on exercise');
+                    }
+                }
+                setRenamingCat(null);
             };
 
             const removeCategory = async (cat) => {
@@ -2009,11 +1998,33 @@
                             </div>
                             {cats.map(cat => (
                                 <div key={cat} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #3a2a30' }}>
-                                    <span style={{ color: '#e8c1d0' }}>{cat}</span>
-                                    <button
-                                        onClick={() => removeCategory(cat)}
-                                        style={{ background: 'none', border: 'none', color: 'rgba(255, 100, 100, 0.4)', fontSize: '18px', cursor: 'pointer', padding: '4px 8px' }}
-                                    >x</button>
+                                    {renamingCat === cat ? (
+                                        <div style={{ display: 'flex', gap: '6px', flex: 1, alignItems: 'center' }}>
+                                            <input
+                                                type="text"
+                                                className="form-input"
+                                                value={renameValue}
+                                                onChange={(e) => setRenameValue(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && confirmRename()}
+                                                autoFocus
+                                                style={{ flex: 1, padding: '6px 10px', fontSize: '13px' }}
+                                            />
+                                            <button onClick={confirmRename} style={{ background: 'none', border: 'none', color: '#8b3a62', fontSize: '13px', fontWeight: '600', cursor: 'pointer', padding: '4px 8px' }}>Save</button>
+                                            <button onClick={() => setRenamingCat(null)} style={{ background: 'none', border: 'none', color: '#999', fontSize: '13px', cursor: 'pointer', padding: '4px 8px' }}>Cancel</button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <span style={{ color: '#e8c1d0', flex: 1 }}>{cat}</span>
+                                            <button
+                                                onClick={() => startRename(cat)}
+                                                style={{ background: 'none', border: 'none', color: 'rgba(199,125,160,0.4)', fontSize: '12px', cursor: 'pointer', padding: '4px 8px' }}
+                                            >rename</button>
+                                            <button
+                                                onClick={() => removeCategory(cat)}
+                                                style={{ background: 'none', border: 'none', color: 'rgba(255, 100, 100, 0.4)', fontSize: '18px', cursor: 'pointer', padding: '4px 8px' }}
+                                            >x</button>
+                                        </>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -2026,11 +2037,13 @@
             );
         };
 
-        const ExercisePickerModal = ({ onSelect, onCreateNew, selectedDate, categories, onCategoriesChanged, defaultCategory }) => {
+        const ExercisePickerModal = ({ onSelect, onCreateNew, selectedDate, categories, onCategoriesChanged, defaultCategory, onPair }) => {
             const [search, setSearch] = useState('');
             const [category, setCategory] = useState(defaultCategory || 'all');
             const [exercises, setExercises] = useState([]);
             const [filtered, setFiltered] = useState([]);
+            const [deleteConfirm, setDeleteConfirm] = useState(null);
+            const [pairingSource, setPairingSource] = useState(null);
 
             useEffect(() => {
                 const loadExercises = async () => {
@@ -2136,20 +2149,83 @@
                                 </div>
                             </div>
 
+                            {deleteConfirm && (
+                                <div style={{ padding: '12px', marginBottom: '12px', borderRadius: '10px', border: '1px solid rgba(220,60,60,0.3)', background: 'rgba(220,60,60,0.08)' }}>
+                                    <div style={{ fontSize: '13px', color: '#e8a0a0', marginBottom: '8px' }}>Delete "{deleteConfirm.name}" permanently? This removes the activity and all its history.</div>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <button onClick={async () => {
+                                            await safeDb(() => dbOps.exercises.delete(deleteConfirm.id), 'delete exercise');
+                                            // Also delete all sets for this exercise
+                                            const allSets = await dbOps.sets.getByExerciseId(deleteConfirm.id);
+                                            for (const s of allSets) { await safeDb(() => dbOps.sets.delete(s.id), 'delete set'); }
+                                            setExercises(prev => prev.filter(e => e.id !== deleteConfirm.id));
+                                            setDeleteConfirm(null);
+                                        }} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', background: 'rgba(220,60,60,0.3)', color: '#ff8888', fontSize: '13px', fontWeight: '600', cursor: 'pointer', WebkitAppearance: 'none' }}>Delete</button>
+                                        <button onClick={() => setDeleteConfirm(null)} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid rgba(139,58,98,0.2)', background: 'rgba(139,58,98,0.05)', color: '#c77da0', fontSize: '13px', cursor: 'pointer', WebkitAppearance: 'none' }}>Cancel</button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {pairingSource && (
+                                <div style={{ padding: '10px 12px', marginBottom: '10px', borderRadius: '10px', background: 'rgba(139,58,98,0.12)', border: '1px solid rgba(139,58,98,0.3)' }}>
+                                    <div style={{ fontSize: '12px', color: '#e8c1d0', fontWeight: '600', marginBottom: '4px' }}>Pairing: {pairingSource.name}</div>
+                                    <div style={{ fontSize: '10px', color: 'rgba(199,125,160,0.5)' }}>Tap another timed activity to pair with</div>
+                                    <button onClick={() => setPairingSource(null)} style={{ marginTop: '6px', padding: '4px 12px', borderRadius: '6px', border: '1px solid rgba(139,58,98,0.2)', background: 'none', color: 'rgba(199,125,160,0.5)', fontSize: '11px', cursor: 'pointer', WebkitAppearance: 'none' }}>Cancel Pairing</button>
+                                </div>
+                            )}
+
                             {filtered.length > 0 ? (
                                 <div className="exercise-picker-section">
                                     <div className="section-title">{category === 'all' ? 'All Activities' : category}</div>
+                                    <div style={{ fontSize: '10px', color: 'rgba(199,125,160,0.3)', marginBottom: '8px' }}>Long press to delete</div>
                                     {filtered.map(ex => (
                                         <div
                                             key={ex.id}
                                             className="exercise-picker-item"
-                                            onClick={() => onSelect(ex)}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                                            onClick={() => {
+                                                if (pairingSource) {
+                                                    if (ex.id === pairingSource.id) return;
+                                                    if (ex.type !== 'timed') return;
+                                                    if (onPair) onPair(pairingSource.id, ex.id);
+                                                    setPairingSource(null);
+                                                } else {
+                                                    onSelect(ex);
+                                                }
+                                            }}
+                                            onTouchStart={(e) => {
+                                                if (pairingSource) return;
+                                                const el = e.currentTarget;
+                                                el._lpTimer = setTimeout(() => { el._lpFired = true; setDeleteConfirm(ex); }, 600);
+                                                el._lpFired = false;
+                                            }}
+                                            onTouchMove={(e) => { const el = e.currentTarget; if (el._lpTimer) { clearTimeout(el._lpTimer); el._lpTimer = null; } }}
+                                            onTouchEnd={(e) => { const el = e.currentTarget; if (el._lpTimer) { clearTimeout(el._lpTimer); el._lpTimer = null; } if (el._lpFired) { e.preventDefault(); } }}
                                         >
-                                            <div className="exercise-picker-name">{ex.name}</div>
-                                            <div className="exercise-picker-meta">
-                                                {getExCategories(ex).length > 0 && <span>{formatCategories(ex)}</span>}
-                                                {ex.lastUsed ? ` · Last: ${formatDateShort(ex.lastUsed)}` : ''}
+                                            <div style={{ flex: 1 }}>
+                                                <div className="exercise-picker-name">{ex.name}</div>
+                                                <div className="exercise-picker-meta">
+                                                    {getExCategories(ex).length > 0 && <span>{formatCategories(ex)}</span>}
+                                                    {ex.lastUsed ? ` · Last: ${formatDateShort(ex.lastUsed)}` : ''}
+                                                </div>
                                             </div>
+                                            {!pairingSource && ex.type === 'timed' && onPair && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setPairingSource(ex); }}
+                                                    style={{
+                                                        padding: '4px 10px', borderRadius: '6px', flexShrink: 0,
+                                                        border: '1px solid rgba(139,58,98,0.3)', background: 'rgba(139,58,98,0.08)',
+                                                        color: 'rgba(199,125,160,0.6)', fontSize: '10px', fontWeight: '600',
+                                                        cursor: 'pointer', WebkitAppearance: 'none',
+                                                    }}
+                                                >pair</button>
+                                            )}
+                                            {pairingSource && ex.id !== pairingSource.id && ex.type === 'timed' && (
+                                                <span style={{ fontSize: '10px', color: '#8b3a62', fontWeight: '600', flexShrink: 0 }}>tap to pair</span>
+                                            )}
+                                            {pairingSource && ex.id === pairingSource.id && (
+                                                <span style={{ fontSize: '10px', color: 'rgba(199,125,160,0.3)', flexShrink: 0 }}>source</span>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -2372,21 +2448,24 @@
                                     onChange={(e) => handleNameChange(e.target.value)}
                                     autoFocus
                                 />
-                                {/* Duplicate detection panel */}
+                                {/* Similar activity detection panel */}
                                 {showDupPanel && dupMatches.length > 0 && (
                                     <div style={{
                                         marginTop: '8px', padding: '10px 12px',
-                                        background: 'rgba(180,120,60,0.1)', border: '1px solid rgba(180,120,60,0.25)',
+                                        background: 'rgba(139,58,98,0.08)', border: '1px solid rgba(139,58,98,0.25)',
                                         borderRadius: '10px',
                                     }}>
-                                        <div style={{ fontSize: '11px', color: '#d4a574', fontWeight: '600', marginBottom: '8px' }}>
-                                            Similar activities found:
+                                        <div style={{ fontSize: '11px', color: '#e8c1d0', fontWeight: '600', marginBottom: '4px' }}>
+                                            Similar activities already exist:
+                                        </div>
+                                        <div style={{ fontSize: '10px', color: 'rgba(199,125,160,0.4)', marginBottom: '8px' }}>
+                                            "Use" logs to the existing activity. "New Variation" creates a separate version (e.g. incline vs flat).
                                         </div>
                                         {dupMatches.map((m, i) => (
                                             <div key={m.exercise.id} style={{
                                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                                 padding: '8px 0',
-                                                borderTop: i > 0 ? '1px solid rgba(180,120,60,0.1)' : 'none',
+                                                borderTop: i > 0 ? '1px solid rgba(139,58,98,0.1)' : 'none',
                                             }}>
                                                 <div>
                                                     <div style={{ fontSize: '13px', color: '#e8d0d0' }}>{m.exercise.name}</div>
@@ -2402,16 +2481,16 @@
                                                             background: '#8b3a62', color: '#fff', fontSize: '10px',
                                                             fontWeight: '600', cursor: 'pointer', WebkitAppearance: 'none',
                                                         }}
-                                                    >Use</button>
+                                                    >Use This</button>
                                                     <button
                                                         onClick={() => { doSave({ variationOf: m.exercise.id }); }}
                                                         style={{
                                                             padding: '5px 10px', borderRadius: '6px',
-                                                            border: '1px solid rgba(139,58,98,0.3)', background: 'none',
+                                                            border: '1px solid rgba(139,58,98,0.3)', background: 'rgba(139,58,98,0.06)',
                                                             color: '#c77da0', fontSize: '10px',
                                                             fontWeight: '600', cursor: 'pointer', WebkitAppearance: 'none',
                                                         }}
-                                                    >Variation</button>
+                                                    >New Variation</button>
                                                 </div>
                                             </div>
                                         ))}
@@ -2419,11 +2498,11 @@
                                             onClick={() => setShowDupPanel(false)}
                                             style={{
                                                 width: '100%', marginTop: '6px', padding: '6px',
-                                                borderRadius: '6px', border: '1px solid rgba(180,120,60,0.15)',
-                                                background: 'none', color: 'rgba(212,165,116,0.6)',
+                                                borderRadius: '6px', border: '1px solid rgba(139,58,98,0.15)',
+                                                background: 'none', color: 'rgba(199,125,160,0.4)',
                                                 fontSize: '11px', cursor: 'pointer', WebkitAppearance: 'none',
                                             }}
-                                        >Create New (Ignore)</button>
+                                        >Neither — Create Brand New</button>
                                     </div>
                                 )}
                                 <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
@@ -2647,8 +2726,14 @@
                                 >{`-${stepperAmount}`}</button>
                                 <input
                                     type="number"
-                                    value={weight}
-                                    onChange={(e) => setWeight(parseFloat(e.target.value) || 0)}
+                                    value={weight || ''}
+                                    onFocus={(e) => e.target.select()}
+                                    onChange={(e) => {
+                                        const v = e.target.value;
+                                        if (v === '' || v === '-') { setWeight(0); return; }
+                                        const n = parseFloat(v);
+                                        if (!isNaN(n)) setWeight(n);
+                                    }}
                                     style={{
                                         width: '56px', minWidth: '56px', height: '46px',
                                         backgroundColor: 'rgba(139,58,98,0.08)',
@@ -3165,6 +3250,7 @@
             const [countdownTime, setCountdownTime] = useState(null);
             const [countdownActive, setCountdownActive] = useState(false);
             const [countdownPreset, setCountdownPreset] = useState(null);
+            const [countdownFinished, setCountdownFinished] = useState(false);
             const cdIntervalRef = useRef(null);
             // Sound settings
             const [showSoundSettings, setShowSoundSettings] = useState(false);
@@ -3199,7 +3285,7 @@
                                 clearInterval(cdIntervalRef.current);
                                 if (soundsOn) playCompletionSound();
                                 setCountdownActive(false);
-                                setTimeout(() => onSelectDuration(countdownPreset), 800);
+                                setCountdownFinished(true);
                                 return 0;
                             }
                             return next;
@@ -3254,7 +3340,7 @@
                     onSelectDuration(preset);
                 }
             };
-            const cancelCountdown = () => { setCountdownActive(false); setCountdownTime(null); setCountdownPreset(null); };
+            const cancelCountdown = () => { setCountdownActive(false); setCountdownFinished(false); setCountdownTime(null); setCountdownPreset(null); };
 
             // Dial
             const dialMinutes = Math.round((dialAngle / 360) * 60);
@@ -3347,7 +3433,30 @@
                                         </div>
 
                                         {/* Active countdown overlay */}
-                                        {countdownActive && countdownTime !== null ? (
+                                        {countdownFinished && countdownPreset ? (
+                                            <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                                                <div style={{ fontSize: '14px', color: 'rgba(199,125,160,0.5)', marginBottom: '8px' }}>Timer complete</div>
+                                                <div style={{ fontSize: '32px', fontWeight: '300', color: '#e8c1d0', marginBottom: '20px' }}>{formatPresetTime(countdownPreset)}</div>
+                                                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                                                    <button
+                                                        onClick={() => { setCountdownFinished(false); onSelectDuration(countdownPreset); }}
+                                                        style={{
+                                                            padding: '12px 28px', borderRadius: '10px', border: 'none', fontSize: '15px', fontWeight: '600', cursor: 'pointer', WebkitAppearance: 'none',
+                                                            background: 'linear-gradient(135deg, #c75030, #e06840)', color: '#fff',
+                                                            boxShadow: '0 0 16px rgba(224,104,64,0.4), 0 0 32px rgba(224,104,64,0.15)',
+                                                        }}
+                                                    >
+                                                        Use {formatPresetTime(countdownPreset)}
+                                                    </button>
+                                                    <button
+                                                        onClick={cancelCountdown}
+                                                        style={{ padding: '12px 24px', borderRadius: '10px', border: '1.5px solid rgba(199,125,160,0.3)', background: 'rgba(139,58,98,0.08)', color: 'rgba(199,125,160,0.6)', fontSize: '14px', fontWeight: '500', cursor: 'pointer', WebkitAppearance: 'none' }}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : countdownActive && countdownTime !== null ? (
                                             <div style={{ textAlign: 'center', padding: '24px 0' }}>
                                                 <div style={{ fontSize: '52px', fontWeight: '300', color: countdownTime <= 5 ? '#F4A5AE' : '#c77da0', fontVariantNumeric: 'tabular-nums', transition: 'color 0.3s' }}>{formatTime(countdownTime)}</div>
                                                 <div style={{ fontSize: '11px', color: 'rgba(199,125,160,0.4)', marginTop: '4px', marginBottom: '16px' }}>counting down from {formatPresetTime(countdownPreset)}</div>
@@ -3773,7 +3882,7 @@
                     }
                 });
 
-                let csv = 'Date,Exercise,Category,Type,Set,Weight,WeightType,Reps,Duration,Note\n' + unitLine + bwLine + splitLine + '\n' + daySplitLines;
+                let csv = 'Date,Exercise,Category,Type,Set,Weight,WeightType,Reps,Duration,Note\n';
                 // Recalculate setOrder on export to fix any stored inconsistencies
                 allSets.sort((a, b) => a.date.localeCompare(b.date) || a.exerciseOrder - b.exerciseOrder || a.setOrder - b.setOrder || a.createdAt - b.createdAt);
                 const setOrderCounters = {};
@@ -3790,7 +3899,6 @@
                         let noteStr = '';
                         if (set.weightType === 'banded' && set.bandedColor) {
                             noteStr = set.bandedColor;
-                            // For banded set 1, also include session notes after band color
                             if (set._exportSetOrder === 1) {
                                 const sn = noteMap[`${set.exerciseId}_${set.date}`];
                                 if (sn) {
@@ -3802,7 +3910,6 @@
                                 }
                             }
                         } else if (set._exportSetOrder === 1) {
-                            // Include session notes on set 1 for round-trip fidelity
                             const sn = noteMap[`${set.exerciseId}_${set.date}`];
                             if (sn) {
                                 const parts = [];
@@ -3812,11 +3919,18 @@
                                 noteStr = parts.join('|');
                             }
                         }
-                        // Quote note field if it contains commas, newlines, or quotes
                         const noteClean = noteStr.replace(/\r?\n/g, ' ').replace(/\r/g, ' ');
                         const noteField = noteClean.includes(',') || noteClean.includes('"') ? `"${noteClean.replace(/"/g, '""')}"` : noteClean;
                         csv += `${set.date},${set.exerciseName},${getExCategories(ex).join(';') || ''},${ex.type || ''},${set._exportSetOrder},${weightStr},${set.weightType},${repsStr},${durationStr},${noteField}\n`;
                     });
+                // Metadata section at bottom — used for re-import, safe to ignore when reading
+                csv += '\n__META__,,,,,,,,,\n';
+                if (unitLine) csv += unitLine;
+                if (bwLine) csv += bwLine;
+                // Only include splits line if there's actual template data
+                const hasSplitData = Object.values(splitMap).some(v => v);
+                if (hasSplitData) csv += splitLine + '\n';
+                if (daySplitLines) csv += daySplitLines;
 
                 const blob = new Blob([csv], { type: 'text/csv' });
                 const url = URL.createObjectURL(blob);
@@ -3882,6 +3996,7 @@
                     let importedBodyweight = null;
                     const lines = allLines.filter(l => {
                         const parts = parseCSVLine(l);
+                        if (parts[0] === '__META__') return false;
                         if (parts[0] === '__UNIT__') {
                             importedUnit = parts[1] || 'lbs';
                             return false;
@@ -4931,6 +5046,7 @@
             const [tab, setTab] = useState(defaultTab || 'history');
             const [notesTab, setNotesTab] = useState('custom');
             const [history, setHistory] = useState([]);
+            const [exercise, setExercise] = useState(null);
             const [customNoteText, setCustomNoteText] = useState('');
             const [formCueText, setFormCueText] = useState('');
             const [pastNotes, setPastNotes] = useState([]);
@@ -4943,6 +5059,9 @@
             // Load data
             useEffect(() => {
                 (async () => {
+                    // Exercise record
+                    const fullEx = await dbOps.exercises.get(exerciseId);
+                    if (fullEx) setExercise(fullEx);
                     // History
                     const allSets = await dbOps.sets.getAll();
                     const exSets = allSets.filter(s => s.exerciseId === exerciseId);
@@ -5223,6 +5342,22 @@
                                         width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid rgba(139,58,98,0.2)', background: 'rgba(139,58,98,0.05)',
                                         color: '#e8c1d0', fontSize: '14px', fontWeight: '500', cursor: 'pointer', WebkitAppearance: 'none', textAlign: 'left',
                                     }}>Change Split</button>
+                                    <button onClick={() => { onAction('changeType'); onClose(); }} style={{
+                                        width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid rgba(139,58,98,0.2)', background: 'rgba(139,58,98,0.05)',
+                                        color: '#e8c1d0', fontSize: '14px', fontWeight: '500', cursor: 'pointer', WebkitAppearance: 'none', textAlign: 'left',
+                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                    }}>
+                                        <span>Change Type</span>
+                                        <span style={{ fontSize: '11px', color: 'rgba(199,125,160,0.5)' }}>{exercise?.type === 'timed' ? 'timed' : 'reps'}</span>
+                                    </button>
+                                    <button onClick={() => { onAction('changeWeightDefault'); onClose(); }} style={{
+                                        width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid rgba(139,58,98,0.2)', background: 'rgba(139,58,98,0.05)',
+                                        color: '#e8c1d0', fontSize: '14px', fontWeight: '500', cursor: 'pointer', WebkitAppearance: 'none', textAlign: 'left',
+                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                    }}>
+                                        <span>Weight Prompt</span>
+                                        <span style={{ fontSize: '11px', color: 'rgba(199,125,160,0.5)' }}>{exercise?.weightDefault === 'bodyweight' ? 'bodyweight' : exercise?.weightDefault === 'none' ? 'no weight' : 'weight'}</span>
+                                    </button>
                                     <button onClick={() => { onAction('rename'); onClose(); }} style={{
                                         width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid rgba(139,58,98,0.2)', background: 'rgba(139,58,98,0.05)',
                                         color: '#e8c1d0', fontSize: '14px', fontWeight: '500', cursor: 'pointer', WebkitAppearance: 'none', textAlign: 'left',
@@ -5257,6 +5392,7 @@
                 setModalRaw(back || null);
             };
             const [selectedExercise, setSelectedExercise] = useState(null);
+            const [pendingNewExerciseId, setPendingNewExerciseId] = useState(null);
             const [selectedWeight, setSelectedWeight] = useState(null);
             const [previousWeight, setPreviousWeight] = useState(null);
             const [loggedSetCount, setLoggedSetCount] = useState(0);
@@ -5287,6 +5423,7 @@
             const [pendingLockType, setPendingLockType] = useState(null);
             const [pillGlowId, setPillGlowId] = useState(null);
             const [renameConfirmData, setRenameConfirmData] = useState(null);
+            const [pairingExerciseId, setPairingExerciseId] = useState(null); // exerciseId currently pairing
             const touchRef = useRef(null);
             const contentRef = useRef(null);
             const longPressRef = useRef(null);
@@ -5421,19 +5558,20 @@
 
             const handleCreateExercise = async (exercise) => {
                 setSelectedExercise(exercise);
+                setPendingNewExerciseId(exercise.id);
                 setPreviousWeight(null);
                 setSetNumber(1);
                 // Bypass weight picker for bodyweight/no-weight exercises
                 if (exercise.weightDefault === 'bodyweight' || exercise.weightDefault === 'none') {
                     setSelectedWeight({ weight: null, weightType: 'bodyweight' });
                     if (exercise.type === 'timed') {
-                        setModal('timedDuration');
+                        setModal('timedDuration', 'exercisePicker');
                     } else {
-                        setModal('repPicker');
+                        setModal('repPicker', 'exercisePicker');
                     }
                     return;
                 }
-                setModal('weightPicker');
+                setModal('weightPicker', 'exercisePicker');
             };
 
             const handleLogSet = async () => {
@@ -5442,7 +5580,16 @@
                 setSetNumber(exerciseSets.length + 1);
 
                 const lastSetForExercise = exerciseSets.sort((a, b) => b.setOrder - a.setOrder)[0];
-                setPreviousWeight(lastSetForExercise?.weight || null);
+                let suggestedWeight = lastSetForExercise?.weight || null;
+                // If no sets today, use last set from last session
+                if (!suggestedWeight) {
+                    const lastSession = await dbOps.sets.getLastSession(selectedExercise.id);
+                    if (lastSession && lastSession.sets.length > 0) {
+                        const lastSessionSet = lastSession.sets.sort((a, b) => (b.setOrder || 0) - (a.setOrder || 0))[0];
+                        suggestedWeight = lastSessionSet?.weight || null;
+                    }
+                }
+                setPreviousWeight(suggestedWeight);
 
                 // Bypass weight picker for bodyweight/no-weight exercises
                 const fullEx = await dbOps.exercises.get(selectedExercise.id);
@@ -5490,6 +5637,14 @@
 
             const handleWeightSelected = async (weightData) => {
                 if (!weightData) {
+                    // Clean up ghost exercise if user backs out before logging a set
+                    if (pendingNewExerciseId) {
+                        const existingSets = await dbOps.sets.getByExerciseId(pendingNewExerciseId);
+                        if (!existingSets || existingSets.length === 0) {
+                            await safeDb(() => dbOps.exercises.delete(pendingNewExerciseId), 'cleanup ghost exercise');
+                        }
+                        setPendingNewExerciseId(null);
+                    }
                     modalBack();
                     setSelectedWeight(null);
                     setPreviousWeight(null);
@@ -5544,6 +5699,7 @@
                     const exCopy = { ...selectedExercise, lastUsed: currentDate };
                     await safeDb(() => dbOps.exercises.update(exCopy), 'update exercise');
 
+                    setPendingNewExerciseId(null);
                     setLoggedSetCount(loggedSetCount + 1);
                     setModal(null);
                     setSelectedExercise(null);
@@ -5559,6 +5715,13 @@
 
             const handleRepsSelected = async (reps) => {
                 if (reps === null) {
+                    if (pendingNewExerciseId) {
+                        const existingSets = await dbOps.sets.getByExerciseId(pendingNewExerciseId);
+                        if (!existingSets || existingSets.length === 0) {
+                            await safeDb(() => dbOps.exercises.delete(pendingNewExerciseId), 'cleanup ghost exercise');
+                        }
+                        setPendingNewExerciseId(null);
+                    }
                     modalBack();
                     setSelectedWeight(null);
                     setPreviousWeight(null);
@@ -5607,6 +5770,7 @@
                 const exCopy = { ...selectedExercise, lastUsed: currentDate };
                 await safeDb(() => dbOps.exercises.update(exCopy), 'update exercise');
 
+                setPendingNewExerciseId(null);
                 setLoggedSetCount(loggedSetCount + 1);
                 setModal(null);
                 setSelectedExercise(null);
@@ -5623,6 +5787,13 @@
 
             const handleDurationSelected = async (duration) => {
                 if (duration === null) {
+                    if (pendingNewExerciseId) {
+                        const existingSets = await dbOps.sets.getByExerciseId(pendingNewExerciseId);
+                        if (!existingSets || existingSets.length === 0) {
+                            await safeDb(() => dbOps.exercises.delete(pendingNewExerciseId), 'cleanup ghost exercise');
+                        }
+                        setPendingNewExerciseId(null);
+                    }
                     modalBack();
                     setSelectedWeight(null);
                     setPreviousWeight(null);
@@ -5670,6 +5841,7 @@
                 const exCopy = { ...selectedExercise, lastUsed: currentDate };
                 await safeDb(() => dbOps.exercises.update(exCopy), 'update exercise');
 
+                setPendingNewExerciseId(null);
                 setLoggedSetCount(loggedSetCount + 1);
                 setModal(null);
                 setSelectedExercise(null);
@@ -5705,6 +5877,53 @@
                 }
             };
 
+            const handlePairWith = async (sourceExerciseId, targetExerciseId) => {
+                const daySets = await dbOps.sets.getByDate(currentDate);
+                const sourceSets = daySets.filter(s => s.exerciseId === sourceExerciseId);
+                const targetSets = daySets.filter(s => s.exerciseId === targetExerciseId);
+                if (sourceSets.length === 0) return;
+
+                const sourceLastSet = sourceSets[sourceSets.length - 1];
+                const targetEx = await dbOps.exercises.get(targetExerciseId);
+                if (!targetEx) return;
+
+                // Mark all source sets as paired
+                for (const s of sourceSets) {
+                    s.pairedWith = targetExerciseId;
+                    await safeDb(() => dbOps.sets.update(s), 'pair source set');
+                }
+
+                // If target has no sets today, create a mirror set with same duration
+                if (targetSets.length === 0) {
+                    const maxOrder = Math.max(...daySets.map(s => s.exerciseOrder), 0);
+                    const newSet = {
+                        id: generateId('set'),
+                        date: currentDate,
+                        exerciseId: targetExerciseId,
+                        exerciseName: targetEx.name,
+                        exerciseOrder: maxOrder + 1,
+                        setOrder: 1,
+                        weight: sourceLastSet.weight,
+                        weightType: sourceLastSet.weightType,
+                        reps: null,
+                        duration: sourceLastSet.duration,
+                        weightMeaning: targetEx.weightMeaning || 'total',
+                        pairedWith: sourceExerciseId,
+                        createdAt: Date.now(),
+                    };
+                    await safeDb(() => dbOps.sets.add(newSet), 'create paired set');
+                } else {
+                    // Mark existing target sets as paired
+                    for (const s of targetSets) {
+                        s.pairedWith = sourceExerciseId;
+                        await safeDb(() => dbOps.sets.update(s), 'pair target set');
+                    }
+                }
+
+                setPairingExerciseId(null);
+                await loadDayData();
+            };
+
             const handleDeleteExercise = (exercise) => {
                 setConfirmation({
                     title: `Delete ${exercise.exerciseName}?`,
@@ -5732,12 +5951,6 @@
                         setSelectedExercise(ex);
                         setModal('sessionNote');
                     });
-                } else if (action === 'viewHistory') {
-                    setSelectedExercise(exercise.sets[0] ? { id: exercise.exerciseId, name: exercise.exerciseName, type: 'reps' } : null);
-                    dbOps.exercises.get(exercise.exerciseId).then(ex => {
-                        setSelectedExercise(ex);
-                        setModal('history');
-                    });
                 } else if (action === 'rename') {
                     setSelectedExercise(exercise.sets[0] ? { id: exercise.exerciseId, name: exercise.exerciseName, type: 'reps' } : null);
                     dbOps.exercises.get(exercise.exerciseId).then(ex => {
@@ -5749,6 +5962,16 @@
                     dbOps.exercises.get(exercise.exerciseId).then(ex => {
                         setSelectedExercise(ex);
                         setModal('changeCategory');
+                    });
+                } else if (action === 'changeType') {
+                    dbOps.exercises.get(exercise.exerciseId).then(ex => {
+                        setSelectedExercise(ex);
+                        setModal('changeType');
+                    });
+                } else if (action === 'changeWeightDefault') {
+                    dbOps.exercises.get(exercise.exerciseId).then(ex => {
+                        setSelectedExercise(ex);
+                        setModal('changeWeightDefault');
                     });
                 }
             };
@@ -5770,18 +5993,36 @@
                 exGroup._categories = exerciseCatsCache[exGroup.exerciseId] || [];
             }
 
-            const exercises = Object.values(groupedExercises).sort((a, b) => {
-                const aOrder = a.sets[0]?.exerciseOrder || 0;
-                const bOrder = b.sets[0]?.exerciseOrder || 0;
-                // If day has a split assigned, push non-matching exercises to bottom
-                if (dayLabel) {
-                    const aInSplit = (a._categories || []).some(c => c.toLowerCase() === dayLabel.toLowerCase());
-                    const bInSplit = (b._categories || []).some(c => c.toLowerCase() === dayLabel.toLowerCase());
-                    if (aInSplit && !bInSplit) return -1;
-                    if (!aInSplit && bInSplit) return 1;
+            // Merge paired exercises into combined cards
+            const pairedMerged = new Set();
+            for (const exGroup of Object.values(groupedExercises)) {
+                const pairedId = exGroup.sets[0]?.pairedWith;
+                if (pairedId && groupedExercises[pairedId] && !pairedMerged.has(exGroup.exerciseId)) {
+                    const partner = groupedExercises[pairedId];
+                    // Mark both as merged — keep the source, hide the partner
+                    exGroup._pairedPartner = partner;
+                    exGroup._pairedName = exGroup.exerciseName.length + partner.exerciseName.length > 28
+                        ? `${exGroup.exerciseName}\n& ${partner.exerciseName}`
+                        : `${exGroup.exerciseName} & ${partner.exerciseName}`;
+                    pairedMerged.add(pairedId);
+                    pairedMerged.add(exGroup.exerciseId);
                 }
-                return aOrder - bOrder;
-            });
+            }
+
+            const exercises = Object.values(groupedExercises)
+                .filter(ex => !pairedMerged.has(ex.exerciseId) || ex._pairedPartner)
+                .sort((a, b) => {
+                    const aOrder = a.sets[0]?.exerciseOrder || 0;
+                    const bOrder = b.sets[0]?.exerciseOrder || 0;
+                    // If day has a split assigned, push non-matching exercises to bottom
+                    if (dayLabel) {
+                        const aInSplit = (a._categories || []).some(c => c.toLowerCase() === dayLabel.toLowerCase());
+                        const bInSplit = (b._categories || []).some(c => c.toLowerCase() === dayLabel.toLowerCase());
+                        if (aInSplit && !bInSplit) return -1;
+                        if (!aInSplit && bInSplit) return 1;
+                    }
+                    return aOrder - bOrder;
+                });
 
             const RenameModal = ({ exercise, onSave, onCancel }) => {
                 const [newName, setNewName] = useState(exercise.name);
@@ -6047,50 +6288,42 @@
                                 exercises.map((exercise) => {
                                     const isExpanded = expandedExercise === exercise.exerciseId;
                                     return (
-                                        <div key={exercise.exerciseId} className="exercise-group" style={isExpanded ? { background: 'rgba(139, 58, 98, 0.07)', borderRadius: '12px', padding: '8px', border: '1px solid rgba(139, 58, 98, 0.1)', overflow: 'visible' } : {}}>
-                                            {!isExpanded && <div className="swipe-delete-btn" onClick={() => handleDeleteExercise(exercise)}>Delete</div>}
-                                            <div
-                                                className={isExpanded ? '' : 'exercise-group-inner'}
-                                                onTouchStart={(e) => {
-                                                    if (isExpanded) return;
-                                                    const el = e.currentTarget;
-                                                    el.dataset.swipeStartX = e.touches[0].clientX;
-                                                    el.dataset.swipeStartY = e.touches[0].clientY;
-                                                    el.dataset.swiping = 'false';
-                                                }}
-                                                onTouchMove={(e) => {
-                                                    if (isExpanded) return;
-                                                    const el = e.currentTarget;
-                                                    const dx = e.touches[0].clientX - parseFloat(el.dataset.swipeStartX);
-                                                    const dy = e.touches[0].clientY - parseFloat(el.dataset.swipeStartY);
-                                                    if (Math.abs(dy) > Math.abs(dx)) return;
-                                                    if (dx < -10) {
-                                                        el.dataset.swiping = 'true';
-                                                        el.style.transform = `translateX(${Math.max(-80, dx)}px)`;
-                                                        el.style.transition = 'none';
-                                                    }
-                                                }}
-                                                onTouchEnd={(e) => {
-                                                    if (isExpanded) return;
-                                                    const el = e.currentTarget;
-                                                    const dx = e.changedTouches[0].clientX - parseFloat(el.dataset.swipeStartX);
-                                                    if (dx < -50) {
-                                                        el.style.transform = 'translateX(-80px)';
-                                                        el.style.transition = 'transform 0.2s ease';
-                                                    } else {
-                                                        el.style.transform = 'translateX(0)';
-                                                        el.style.transition = 'transform 0.2s ease';
-                                                    }
-                                                }}
-                                            >
+                                        <div key={exercise.exerciseId} className="exercise-group" style={isExpanded ? { background: 'rgba(139, 58, 98, 0.07)', borderRadius: '12px', padding: '8px', border: '1px solid rgba(139, 58, 98, 0.1)', overflow: 'visible' } : {}}
+                                            onTouchStart={(e) => {
+                                                if (isExpanded) return;
+                                                const el = e.currentTarget;
+                                                el._longPressTimer = setTimeout(() => {
+                                                    el._longPressFired = true;
+                                                    handleDeleteExercise(exercise);
+                                                }, 600);
+                                                el._longPressFired = false;
+                                            }}
+                                            onTouchMove={(e) => {
+                                                const el = e.currentTarget;
+                                                if (el._longPressTimer) { clearTimeout(el._longPressTimer); el._longPressTimer = null; }
+                                            }}
+                                            onTouchEnd={(e) => {
+                                                const el = e.currentTarget;
+                                                if (el._longPressTimer) { clearTimeout(el._longPressTimer); el._longPressTimer = null; }
+                                            }}
+                                        >
+                                            <div>
                                             <div
                                                 className="exercise-collapsible"
                                                 onClick={() => setExpandedExercise(isExpanded ? null : exercise.exerciseId)}
                                             >
                                                 <div className="exercise-toggle-header">
                                                     <div className="exercise-name">
-                                                        {exercise.exerciseName}
-                                                        {exercise._categories && exercise._categories.length > 1 && (
+                                                        {exercise._pairedName ? (
+                                                            exercise._pairedName.includes('\n') ? (
+                                                                <span style={{ fontSize: '13px', lineHeight: '1.3' }}>
+                                                                    {exercise._pairedName.split('\n').map((line, i) => (
+                                                                        <React.Fragment key={i}>{i > 0 && <br />}{line}</React.Fragment>
+                                                                    ))}
+                                                                </span>
+                                                            ) : exercise._pairedName
+                                                        ) : exercise.exerciseName}
+                                                        {!exercise._pairedName && exercise._categories && exercise._categories.length > 1 && (
                                                             <span style={{ fontSize: '9px', color: 'rgba(199,125,160,0.4)', marginLeft: '6px', fontWeight: '400' }}>
                                                                 {exercise._categories.join(' / ')}
                                                             </span>
@@ -6145,15 +6378,6 @@
                                                             </div>
                                                         ) : null;
                                                     })()}
-                                                    {isExpanded && (
-                                                        <button
-                                                            className="exercise-menu-btn"
-                                                            onClick={(e) => { e.stopPropagation(); setModal(`menu-${exercise.exerciseId}`); }}
-                                                            style={{ marginLeft: 'auto', padding: '4px 12px', fontSize: '14px', color: 'rgba(199,125,160,0.5)', background: 'none', border: 'none', cursor: 'pointer', WebkitAppearance: 'none' }}
-                                                        >
-                                                            ⋯
-                                                        </button>
-                                                    )}
                                                 </div>
 
 
@@ -6341,6 +6565,53 @@
 
                                             {isExpanded && (
                                                 <>
+                                                    {/* Pair with button — timed only, not already paired */}
+                                                    {(() => {
+                                                        const exType = exercise.sets[0] ? getSetType(exercise.sets[0]) : 'reps';
+                                                        const isTimed = exType === 'timed';
+                                                        const isAlreadyPaired = exercise._pairedPartner || exercise.sets[0]?.pairedWith;
+                                                        if (!isTimed || isAlreadyPaired || exercise.sets.length === 0) return null;
+                                                        return (
+                                                            <div style={{ marginTop: '4px' }}>
+                                                                <button
+                                                                    onClick={() => setPairingExerciseId(pairingExerciseId === exercise.exerciseId ? null : exercise.exerciseId)}
+                                                                    style={{
+                                                                        width: '100%', padding: '8px', borderRadius: '8px',
+                                                                        border: '1px dashed rgba(139,58,98,0.3)',
+                                                                        background: pairingExerciseId === exercise.exerciseId ? 'rgba(139,58,98,0.12)' : 'none',
+                                                                        color: '#c77da0', fontSize: '11px', fontWeight: '500',
+                                                                        cursor: 'pointer', WebkitAppearance: 'none',
+                                                                    }}
+                                                                >
+                                                                    {pairingExerciseId === exercise.exerciseId ? 'Cancel pairing' : 'Pair with...'}
+                                                                </button>
+                                                                {pairingExerciseId === exercise.exerciseId && (() => {
+                                                                    const otherTimed = exercises.filter(e =>
+                                                                        e.exerciseId !== exercise.exerciseId &&
+                                                                        !e._pairedPartner && !e.sets[0]?.pairedWith
+                                                                    );
+                                                                    return otherTimed.length > 0 ? (
+                                                                        <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                            {otherTimed.map(e => (
+                                                                                <button key={e.exerciseId} onClick={() => handlePairWith(exercise.exerciseId, e.exerciseId)} style={{
+                                                                                    width: '100%', padding: '10px 12px', borderRadius: '8px',
+                                                                                    border: '1px solid rgba(139,58,98,0.2)', background: 'rgba(139,58,98,0.05)',
+                                                                                    color: '#e8c1d0', fontSize: '13px', fontWeight: '500',
+                                                                                    cursor: 'pointer', WebkitAppearance: 'none', textAlign: 'left',
+                                                                                }}>
+                                                                                    {e.exerciseName}
+                                                                                </button>
+                                                                            ))}
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div style={{ fontSize: '11px', color: 'rgba(199,125,160,0.4)', marginTop: '4px', textAlign: 'center' }}>
+                                                                            No other activities to pair with today
+                                                                        </div>
+                                                                    );
+                                                                })()}
+                                                            </div>
+                                                        );
+                                                    })()}
                                                     {/* Mood Range Slider - 1-100 gradient */}
                                                     <div style={{ marginTop: '4px', position: 'relative' }}>
                                                         <input
@@ -6472,6 +6743,10 @@
                             }}
                             selectedDate={currentDate}
                             defaultCategory={dayLabel ? dayLabel.toLowerCase() : 'all'}
+                            onPair={async (sourceId, targetId) => {
+                                await handlePairWith(sourceId, targetId);
+                                setModal(null);
+                            }}
                         />
                     )}
 
@@ -6569,6 +6844,81 @@
                         />
                     )}
 
+                    {modal === 'changeType' && selectedExercise && (() => {
+                        const currentType = selectedExercise.type || 'reps';
+                        const newType = currentType === 'reps' ? 'timed' : 'reps';
+                        const handleConfirmTypeChange = async () => {
+                            const updated = { ...selectedExercise, type: newType };
+                            const ok = await safeDb(() => dbOps.exercises.update(updated), 'change type');
+                            if (ok) {
+                                setModal(null);
+                                setSelectedExercise(null);
+                                loadDayData();
+                            }
+                        };
+                        return (
+                            <div className="modal-overlay" onClick={() => { setModal(null); setSelectedExercise(null); }}>
+                                <div style={{ background: '#1a0a12', borderRadius: '16px', padding: '24px', maxWidth: '340px', width: '100%', margin: '0 20px', border: '1px solid rgba(139,58,98,0.3)' }} onClick={(e) => e.stopPropagation()}>
+                                    <div style={{ fontSize: '15px', fontWeight: '600', color: '#e8c1d0', marginBottom: '12px', textAlign: 'center' }}>Change Type</div>
+                                    <div style={{ fontSize: '13px', color: '#c77da0', lineHeight: '1.5', marginBottom: '8px', textAlign: 'center' }}>
+                                        Switch <strong style={{ color: '#e8c1d0' }}>{selectedExercise.name}</strong> from <strong style={{ color: '#e8c1d0' }}>{currentType}</strong> to <strong style={{ color: '#e8c1d0' }}>{newType}</strong>?
+                                    </div>
+                                    <div style={{ fontSize: '11px', color: 'rgba(199,125,160,0.5)', lineHeight: '1.4', marginBottom: '20px', textAlign: 'center' }}>
+                                        Your existing logged sets will keep their original data. New sets will use the {newType === 'timed' ? 'duration timer' : 'rep counter'}.
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '12px' }}>
+                                        <button onClick={() => { setModal(null); setSelectedExercise(null); }} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid rgba(139,58,98,0.3)', background: 'rgba(139,58,98,0.1)', color: '#c77da0', fontSize: '14px', fontWeight: '600', cursor: 'pointer', WebkitAppearance: 'none' }}>Cancel</button>
+                                        <button onClick={handleConfirmTypeChange} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', background: '#8b3a62', color: '#fff', fontSize: '14px', fontWeight: '600', cursor: 'pointer', WebkitAppearance: 'none' }}>Switch to {newType}</button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
+
+                    {modal === 'changeWeightDefault' && selectedExercise && (() => {
+                        const currentWD = selectedExercise.weightDefault || 'weight';
+                        const options = [
+                            { id: 'weight', label: 'Weight', desc: 'Weight picker shown each set' },
+                            { id: 'bodyweight', label: 'Bodyweight', desc: 'Auto-logs as bodyweight, skips weight picker' },
+                            { id: 'none', label: 'No Weight', desc: 'Skips weight picker entirely' },
+                        ];
+                        const handleSelect = async (newWD) => {
+                            if (newWD === currentWD) { setModal(null); setSelectedExercise(null); return; }
+                            const updated = { ...selectedExercise, weightDefault: newWD };
+                            const ok = await safeDb(() => dbOps.exercises.update(updated), 'change weight default');
+                            if (ok) {
+                                setModal(null);
+                                setSelectedExercise(null);
+                                loadDayData();
+                            }
+                        };
+                        return (
+                            <div className="modal-overlay" onClick={() => { setModal(null); setSelectedExercise(null); }}>
+                                <div style={{ background: '#1a0a12', borderRadius: '16px', padding: '24px', maxWidth: '340px', width: '100%', margin: '0 20px', border: '1px solid rgba(139,58,98,0.3)' }} onClick={(e) => e.stopPropagation()}>
+                                    <div style={{ fontSize: '15px', fontWeight: '600', color: '#e8c1d0', marginBottom: '4px', textAlign: 'center' }}>Weight Prompt</div>
+                                    <div style={{ fontSize: '11px', color: 'rgba(199,125,160,0.5)', marginBottom: '16px', textAlign: 'center' }}>{selectedExercise.name}</div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                                        {options.map(opt => (
+                                            <button key={opt.id} onClick={() => handleSelect(opt.id)} style={{
+                                                width: '100%', padding: '14px', borderRadius: '10px', textAlign: 'left', cursor: 'pointer', WebkitAppearance: 'none',
+                                                border: currentWD === opt.id ? '1.5px solid #8b3a62' : '1px solid rgba(139,58,98,0.2)',
+                                                background: currentWD === opt.id ? 'rgba(139,58,98,0.12)' : 'rgba(139,58,98,0.04)',
+                                            }}>
+                                                <div style={{ color: '#e8c1d0', fontSize: '14px', fontWeight: '500' }}>{opt.label}</div>
+                                                <div style={{ color: 'rgba(199,125,160,0.5)', fontSize: '11px', marginTop: '2px' }}>{opt.desc}</div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <button onClick={() => { setModal(null); setSelectedExercise(null); }} style={{
+                                        width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(139,58,98,0.3)',
+                                        background: 'rgba(139,58,98,0.1)', color: '#c77da0', fontSize: '13px', fontWeight: '600',
+                                        cursor: 'pointer', WebkitAppearance: 'none',
+                                    }}>Cancel</button>
+                                </div>
+                            </div>
+                        );
+                    })()}
+
                     {modal === 'rename' && selectedExercise && (
                         <RenameModal
                             exercise={selectedExercise}
@@ -6648,16 +6998,6 @@
                         </div>
                     )}
 
-                    {modal === 'history' && selectedExercise && (
-                        <HistoryModal
-                            exercise={selectedExercise}
-                            onClose={() => {
-                                setModal(null);
-                                setSelectedExercise(null);
-                            }}
-                            unit={unit}
-                        />
-                    )}
 
                     {modal === 'dayDetail' && (
                         <DayDetailModal
@@ -6673,60 +7013,6 @@
                         />
                     )}
 
-                    {modal?.startsWith('menu-') && (
-                        (() => {
-                            const exerciseId = modal.replace('menu-', '');
-                            const exercise = exercises.find(e => e.exerciseId === exerciseId);
-                            if (exercise) {
-                                return (
-                                    <div className="modal-overlay" onClick={() => setModal(null)}>
-                                        <div className="context-menu" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: '#1a0a12', borderRadius: '12px', padding: '8px 0', border: '1px solid rgba(139, 58, 98, 0.2)' }}>
-                                            <div
-                                                className="context-menu-item"
-                                                style={{ padding: '14px 20px', color: '#c77da0', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}
-                                                onClick={() => {
-                                                    handleMenuClick(exercise, 'viewHistory');
-                                                    setModal(null);
-                                                }}
-                                            >
-                                                View History
-                                            </div>
-                                            <div
-                                                className="context-menu-item"
-                                                style={{ padding: '14px 20px', color: '#c77da0', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}
-                                                onClick={() => {
-                                                    handleMenuClick(exercise, 'changeCategory');
-                                                    setModal(null);
-                                                }}
-                                            >
-                                                Add to Split
-                                            </div>
-                                            <div
-                                                className="context-menu-item"
-                                                style={{ padding: '14px 20px', color: '#c77da0', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}
-                                                onClick={() => {
-                                                    handleMenuClick(exercise, 'rename');
-                                                    setModal(null);
-                                                }}
-                                            >
-                                                Rename
-                                            </div>
-                                            <div
-                                                className="context-menu-item danger"
-                                                style={{ padding: '14px 20px', color: '#ff6b6b', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}
-                                                onClick={() => {
-                                                    handleMenuClick(exercise, 'delete');
-                                                    setModal(null);
-                                                }}
-                                            >
-                                                Delete Activity
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            }
-                        })()
-                    )}
 
                     {confirmation && (
                         <ConfirmationDialog
